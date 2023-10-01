@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/simaosilva/uni/DAD/proj/Client/Client.csproj": {}
+    "/home/simaosilva/uni/DAD/proj5/Client/Client.csproj": {}
   },
   "projects": {
-    "/home/simaosilva/uni/DAD/proj/Client/Client.csproj": {
+    "/home/simaosilva/uni/DAD/proj5/Client/Client.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/simaosilva/uni/DAD/proj/Client/Client.csproj",
+        "projectUniqueName": "/home/simaosilva/uni/DAD/proj5/Client/Client.csproj",
         "projectName": "Client",
-        "projectPath": "/home/simaosilva/uni/DAD/proj/Client/Client.csproj",
+        "projectPath": "/home/simaosilva/uni/DAD/proj5/Client/Client.csproj",
         "packagesPath": "/home/simaosilva/.nuget/packages/",
-        "outputPath": "/home/simaosilva/uni/DAD/proj/Client/obj/",
+        "outputPath": "/home/simaosilva/uni/DAD/proj5/Client/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/simaosilva/.nuget/NuGet/NuGet.Config"
@@ -53,7 +53,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/7.0.110/RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/7.0.111/RuntimeIdentifierGraph.json"
         }
       }
     }
