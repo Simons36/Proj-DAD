@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using src;
 
 namespace src
 {
@@ -15,13 +16,19 @@ namespace src
 
         private int _numberOfTimeSlots;
 
-        DateTime _startingTime;
+        private DateTime _startingTime;
 
-        int _timeSlotDuration;
+        private int _timeSlotDuration;
+
+        private Dictionary<int, FailureStatus> _failureStatusMap; //failure struct for each time slot
+
+        private int _serverCount;
 
         public ConfigReader(string configPath){
             _processes = new List<ProcessStartInfo>();
             _configPath = configPath;
+            _serverCount = 0;
+            _failureStatusMap = new Dictionary<int, FailureStatus>();
         }
 
         // Getters
@@ -70,6 +77,7 @@ namespace src
         private void ReadConfigLine(string line){
             //check if it is a comment (starts with #)
             char firstChar = line[0];
+            Dictionary<string, int> mapServersPosition = new Dictionary<string, int>();
 
             switch(firstChar){
                 case '#':
@@ -87,11 +95,15 @@ namespace src
                         case "T":
                             // Transaction Manager
                             pathToProject = LauncherPaths.TransactionManagerPath;
+                            _serverCount++;
+                            mapServersPosition.Add(processName, mapServersPosition.Count);
                             break;
 
                         case "L":
                             // Lease Manager
                             pathToProject = LauncherPaths.LeaseManagerPath;
+                            _serverCount++;
+                            mapServersPosition.Add(processName, mapServersPosition.Count);
                             break;
 
                         case "C":
@@ -148,7 +160,38 @@ namespace src
                     string[] splitLine = line.Split(" ");
                     _timeSlotDuration = int.Parse(splitLine[1]);
 
-                    Console.WriteLine($"Time slot duration: {_timeSlotDuration}");
+                    Console.WriteLine($"Time slot duration: {_timeSlotDuration} ms");
+                    }
+                    break;
+
+                case 'F':
+                    {
+                    // Failure, add to failure status map
+                    string[] splitLine = line.Split(" ");
+                    int timeSlot = int.Parse(splitLine[1]);
+
+                    FailureStatus failureStatus = new FailureStatus(_serverCount);
+                    failureStatus.setMapServersPosition(mapServersPosition);
+
+                    for(int i = 2; i < _serverCount + 2; i++){
+                        if(splitLine[i].Equals("C")){
+                            string serverCrashed = mapServersPosition.FirstOrDefault(x => x.Value == i-2).Key;
+                            Console.WriteLine($"Server {serverCrashed} crashed");
+                            failureStatus.setCrashed(i - 2);
+                        }
+                    }
+
+                    for(int i = _serverCount + 2; i < splitLine.Length; i++){
+                        splitLine[i].Remove(0);
+                        splitLine[i].Remove(splitLine[i].Length - 1);
+
+                        string[] splitServers = splitLine[i].Split(",");
+
+                        failureStatus.addCrashSuspicion(splitServers[0], splitServers[1]);
+                    }
+
+                    _failureStatusMap.Add(timeSlot, failureStatus);
+
                     }
                     break;
                 
