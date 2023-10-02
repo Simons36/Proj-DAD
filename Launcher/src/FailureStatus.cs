@@ -1,28 +1,27 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Launcher.src
+namespace src
 {
-    public struct FailureStatusStruct
-    {
-        private int _timeSlot;
-        
+    public class FailureStatus
+    {   
         private bool[] _crashedStatus;
 
         private List<string[]> _crashedSuspicions;
 
-        public FailureStatusStruct(int timeSlot, int numServers){
-            _timeSlot = timeSlot;
+        private Dictionary<string, int> _mapServersPosition;
+
+        public FailureStatus(int numServers){
             _crashedStatus = new bool[numServers];
             for(int i = 0; i < numServers; i++){
                 _crashedStatus[i] = false;
             }
-        }
 
-        public int TimeSlot{
-            get { return _timeSlot; }
+            _crashedSuspicions = new List<string[]>();
+            _mapServersPosition = new Dictionary<string, int>();
         }
 
         public void setCrashed(int serverId){
@@ -36,6 +35,11 @@ namespace Launcher.src
             crashSuspicion[1] = suspectedServer;
 
             _crashedSuspicions.Add(crashSuspicion);
+        }
+
+        //set the map of servers position
+        public void setMapServersPosition(Dictionary<string, int> mapServersPosition){
+            _mapServersPosition = mapServersPosition;
         }
     }
 }
