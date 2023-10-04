@@ -9,8 +9,14 @@ namespace src
 {
     public class ConfigReader{
 
+        //blueprint of a command: "-- dotnet run --project {pathToProject} -n {processName} -e {extraArgument} -c {timeslot that server crashes} 
+        //                                                                 -s {timeSlot where suspicion occurs} {suspected server} -nr {number of time slots}
+        //                                                                 -d {duration of a time slot} -t {starting time of test}
+
         // TODO: Add a way to read the config file and parse it into a list of ProcessStartInfo objects
         private List<ProcessStartInfo> _processes;
+
+        private Dictionary<string, string> _processesArgumentsMap; //key: process name, value: arguments for console line
 
         private string _configPath;
 
@@ -20,39 +26,27 @@ namespace src
 
         private int _timeSlotDuration;
 
-        private Dictionary<int, FailureStatus> _failureStatusMap; //failure struct for each time slot
-
         private int _serverCount;
+
+        private Dictionary<int, string> _mapServersPosition;
+
+
+        private List<string> _serversThatCrashed;
+
 
         public ConfigReader(string configPath){
             _processes = new List<ProcessStartInfo>();
             _configPath = configPath;
             _serverCount = 0;
-            _failureStatusMap = new Dictionary<int, FailureStatus>();
+            _mapServersPosition = new Dictionary<int, string>();
+            _processesArgumentsMap = new Dictionary<string, string>();
+            _serversThatCrashed = new List<string>();
         }
 
         // Getters
         public List<ProcessStartInfo> Processes{
             get{
                 return _processes;
-            }
-        }
-
-        public int NumberOfTimeSlots{
-            get{
-                return _numberOfTimeSlots;
-            }
-        }
-
-        public DateTime StartingTime{
-            get{
-                return _startingTime;
-            }
-        }
-
-        public int TimeSlotDuration{
-            get{
-                return _timeSlotDuration;
             }
         }
 
@@ -67,6 +61,22 @@ namespace src
                         ReadConfigLine(line);
                     }
 
+                    List<string> keys = new List<string>(_processesArgumentsMap.Keys);
+                    foreach(string key in keys){
+                        _processesArgumentsMap[key] += $" -nr {_numberOfTimeSlots.ToString()} -d {_timeSlotDuration.ToString()} -t {_startingTime.TimeOfDay.ToString()}";
+
+                        string arguments = _processesArgumentsMap[key];
+
+                        ProcessStartInfo processStartInfo = new ProcessStartInfo{
+                            FileName = "gnome-terminal",
+                            Arguments = arguments,
+                            RedirectStandardOutput = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+
+                        _processes.Add(processStartInfo);
+                    }
                 }
             }
             catch (IOException e){
@@ -77,7 +87,7 @@ namespace src
         private void ReadConfigLine(string line){
             //check if it is a comment (starts with #)
             char firstChar = line[0];
-            Dictionary<string, int> mapServersPosition = new Dictionary<string, int>();
+            
 
             switch(firstChar){
                 case '#':
@@ -96,14 +106,14 @@ namespace src
                             // Transaction Manager
                             pathToProject = LauncherPaths.TransactionManagerPath;
                             _serverCount++;
-                            mapServersPosition.Add(processName, mapServersPosition.Count);
+                            _mapServersPosition.Add(_mapServersPosition.Count, processName);
                             break;
 
                         case "L":
                             // Lease Manager
                             pathToProject = LauncherPaths.LeaseManagerPath;
                             _serverCount++;
-                            mapServersPosition.Add(processName, mapServersPosition.Count);
+                            _mapServersPosition.Add(_mapServersPosition.Count, processName);
                             break;
 
                         case "C":
@@ -118,18 +128,11 @@ namespace src
 
                     string extraArgument = splitLine[3];
 
-
-                    ProcessStartInfo process = new ProcessStartInfo(){
-                        FileName = "gnome-terminal",
-                        Arguments = $"-- dotnet run --project {pathToProject} {processName} {extraArgument}",
-                        RedirectStandardOutput = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
+                    string argumentsLine = $"-- dotnet run --project {pathToProject} -n {processName} -e {extraArgument}";
+                    _processesArgumentsMap.Add(processName, argumentsLine);
 
                     Console.WriteLine($"Read process with name {processName} of type {splitLine[2]} with extra argument {extraArgument}");
 
-                    _processes.Add(process);
                     }
                     break;
 
@@ -170,27 +173,29 @@ namespace src
                     string[] splitLine = line.Split(" ");
                     int timeSlot = int.Parse(splitLine[1]);
 
-                    FailureStatus failureStatus = new FailureStatus(_serverCount);
-                    failureStatus.setMapServersPosition(mapServersPosition);
+                    
 
                     for(int i = 2; i < _serverCount + 2; i++){
                         if(splitLine[i].Equals("C")){
-                            string serverCrashed = mapServersPosition.FirstOrDefault(x => x.Value == i-2).Key;
-                            Console.WriteLine($"Server {serverCrashed} crashed");
-                            failureStatus.setCrashed(i - 2);
+                            string _serverName = _mapServersPosition[i - 2];
+                            if(!_serversThatCrashed.Contains(_serverName)){
+                                _processesArgumentsMap[_serverName] += $" -c {timeSlot}"; //introduce time slot to crash
+                                _serversThatCrashed.Add(_serverName);
+                            }
                         }
                     }
 
                     for(int i = _serverCount + 2; i < splitLine.Length; i++){
-                        splitLine[i].Remove(0);
-                        splitLine[i].Remove(splitLine[i].Length - 1);
 
+                        // Remove the first and last character (parenthesis)
+                        splitLine[i] = splitLine[i].Remove(0, 1);
+                        splitLine[i] = splitLine[i].Remove(splitLine[i].Length - 1, 1);
+                        // Split the string into two parts, the server that suspects and the suspected server
                         string[] splitServers = splitLine[i].Split(",");
 
-                        failureStatus.addCrashSuspicion(splitServers[0], splitServers[1]);
+                        // Add the crash suspicion to the failure status object
+                        _processesArgumentsMap[splitServers[0]] += $" -s {timeSlot} {splitServers[1]}";
                     }
-
-                    _failureStatusMap.Add(timeSlot, failureStatus);
 
                     }
                     break;
