@@ -1,25 +1,27 @@
 {
   "format": 1,
   "restore": {
-    "/home/simaosilva/uni/DAD/proj5/Client/Client.csproj": {}
+    "C:\\Users\\simao\\source\\repos\\Simons36\\Proj-DAD\\Client\\Client.csproj": {}
   },
   "projects": {
-    "/home/simaosilva/uni/DAD/proj5/Client/Client.csproj": {
+    "C:\\Users\\simao\\source\\repos\\Simons36\\Proj-DAD\\Client\\Client.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/simaosilva/uni/DAD/proj5/Client/Client.csproj",
+        "projectUniqueName": "C:\\Users\\simao\\source\\repos\\Simons36\\Proj-DAD\\Client\\Client.csproj",
         "projectName": "Client",
-        "projectPath": "/home/simaosilva/uni/DAD/proj5/Client/Client.csproj",
-        "packagesPath": "/home/simaosilva/.nuget/packages/",
-        "outputPath": "/home/simaosilva/uni/DAD/proj5/Client/obj/",
+        "projectPath": "C:\\Users\\simao\\source\\repos\\Simons36\\Proj-DAD\\Client\\Client.csproj",
+        "packagesPath": "C:\\Users\\simao\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\simao\\source\\repos\\Simons36\\Proj-DAD\\Client\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/simaosilva/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\simao\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net7.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -53,7 +55,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/7.0.111/RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.401\\RuntimeIdentifierGraph.json"
         }
       }
     }

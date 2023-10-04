@@ -2,6 +2,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Client\Client.csproj" />
+    <ProjectReference Include="..\LeaseManager\LeaseManager.csproj" />
+    <ProjectReference Include="..\TransactionManager\TransactionManager.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
