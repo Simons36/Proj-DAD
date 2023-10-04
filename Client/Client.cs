@@ -1,7 +1,12 @@
-﻿using Client.src.state;
+﻿using Grpc.Core;
+using Grpc.Net.Client;
+using Client.src.state;
+using DInt;
 
-namespace Client{
-    public class Client{
+namespace Client
+{
+    public class Client
+    {
         private static void Main(string[] args)
         {
             //prefixes of arguments received
@@ -16,7 +21,8 @@ namespace Client{
 
             Console.WriteLine("Starting DADKTV client process. Received arguments:");
 
-            for (int i = 0; i < args.Length; i++){
+            for (int i = 0; i < args.Length; i++)
+            {
                 string arg = args[i];
 
                 Console.WriteLine(arg);
@@ -60,13 +66,27 @@ namespace Client{
 
         private static bool isNotPrefix(string arg)
         {
-            if(arg.Equals("-n") || arg.Equals("-e") || arg.Equals("-nr") || arg.Equals("-d") || arg.Equals("-t") || arg.Equals("-u"))
+            if (arg.Equals("-n") || arg.Equals("-e") || arg.Equals("-nr") || arg.Equals("-d") || arg.Equals("-t") || arg.Equals("-u"))
             {
                 return false;
             }
             return true;
         }
 
+        public List<DadInt> TxSubmit(string client, List<string> keys, List<DadInt> ds)
+        {
+            /* estabelecer comunicação com lease managers e pedir o submit (TO DO) */
+
+            return new List<DadInt>();
+        }
+
+
+        public bool Status()
+        {
+            /* estabelecer comunicação com lease managers e pedir status(TO DO) */
+
+            return true;
+        }
     }
 
 }
