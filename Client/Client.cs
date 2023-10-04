@@ -75,7 +75,7 @@ namespace Client
 
         public List<DadInt> TxSubmit(string client, List<string> keys, List<DadInt> ds)
         {
-            /* estabelecer comunicação com lease managers e pedir o submit (TO DO) */
+            /* estabelecer comunicação com transaction managers e pedir o submit (TO DO) */
 
             return new List<DadInt>();
         }
@@ -83,7 +83,7 @@ namespace Client
 
         public bool Status()
         {
-            /* estabelecer comunicação com lease managers e pedir status(TO DO) */
+            /* estabelecer comunicação com transaction managers e pedir status (TO DO) */
 
             return true;
         }
