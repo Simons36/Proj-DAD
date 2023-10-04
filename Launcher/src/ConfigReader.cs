@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using src;
 
@@ -12,6 +13,7 @@ namespace src
         //blueprint of a command: "-- dotnet run --project {pathToProject} -n {processName} -e {extraArgument} -c {timeslot that server crashes} 
         //                                                                 -s {timeSlot where suspicion occurs} {suspected server} -nr {number of time slots}
         //                                                                 -d {duration of a time slot} -t {starting time of test}
+        //                                                                 !CLIENT ONLY! -u {url tm1} {url tm2} ... {url tmN}
 
         // TODO: Add a way to read the config file and parse it into a list of ProcessStartInfo objects
         private List<ProcessStartInfo> _processes;
@@ -30,10 +32,16 @@ namespace src
 
         private Dictionary<int, string> _mapServersPosition;
 
-
         private List<string> _serversThatCrashed;
 
+        private List<string> _transactionManagersUrls; //for clients
 
+        //following attributes only used in Windows version
+        private string _clientPath;
+        private string _transactionManagerPath;
+        private string _leaseManagerPath;
+
+        //Linux Constructor
         public ConfigReader(string configPath){
             _processes = new List<ProcessStartInfo>();
             _configPath = configPath;
@@ -41,6 +49,23 @@ namespace src
             _mapServersPosition = new Dictionary<int, string>();
             _processesArgumentsMap = new Dictionary<string, string>();
             _serversThatCrashed = new List<string>();
+            _transactionManagersUrls = new List<string>();
+        }
+
+        //Windows Constructor
+        public ConfigReader(string configPath, string[] processesPaths)
+        {
+            _processes = new List<ProcessStartInfo>();
+            _configPath = configPath;
+            _serverCount = 0;
+            _mapServersPosition = new Dictionary<int, string>();
+            _processesArgumentsMap = new Dictionary<string, string>();
+            _serversThatCrashed = new List<string>();
+            _transactionManagersUrls = new List<string>();
+
+            _clientPath = processesPaths[0];
+            _transactionManagerPath = processesPaths[1];
+            _leaseManagerPath = processesPaths[2];
         }
 
         // Getters
@@ -67,13 +92,53 @@ namespace src
 
                         string arguments = _processesArgumentsMap[key];
 
-                        ProcessStartInfo processStartInfo = new ProcessStartInfo{
-                            FileName = "gnome-terminal",
-                            Arguments = arguments,
-                            RedirectStandardOutput = true,
-                            UseShellExecute = false,
-                            CreateNoWindow = true
-                        };
+                        ProcessStartInfo processStartInfo;
+
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                        {
+                            string filenamePath;
+
+                            if (arguments.ElementAt(0).Equals('C'))
+                            {
+                                filenamePath = _clientPath;
+
+                                arguments += " -u";
+
+                                //add transaction managers urls to client arguments so they know who to contact
+                                foreach(string url in _transactionManagersUrls)
+                                {
+                                    arguments += $" {url}";
+                                }
+                            }else if (arguments.ElementAt(0).Equals('T'))
+                            {
+                                filenamePath = _transactionManagerPath;
+                            }
+                            else
+                            {
+                                filenamePath = _leaseManagerPath;
+                            }
+
+
+                            processStartInfo = new ProcessStartInfo
+                            {
+                                FileName = filenamePath,
+                                Arguments = arguments.Remove(0, 2), //first argument (identifier 'C', 'T' or 'L' not needed)
+                                UseShellExecute = true,
+                                CreateNoWindow = true
+                            };
+
+                        }
+                        else
+                        {
+                            processStartInfo = new ProcessStartInfo
+                            {
+                                FileName = "gnome-terminal",
+                                Arguments = arguments,
+                                RedirectStandardOutput = true,
+                                UseShellExecute = false,
+                                CreateNoWindow = true
+                            };
+                        }
 
                         _processes.Add(processStartInfo);
                     }
@@ -98,27 +163,49 @@ namespace src
                     // Process, add to list
                     string[] splitLine = line.Split(" ");
                     string processName = splitLine[1];
-                    string pathToProject; 
+                    string pathToProject;
 
                     switch(splitLine[2]){
 
                         case "T":
                             // Transaction Manager
-                            pathToProject = LauncherPaths.TransactionManagerPath;
+                            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)){
+                                pathToProject = splitLine[2];
+                            }
+                            else{
+                                pathToProject = LauncherPaths.TransactionManagerPath;
+                            }
+                            
                             _serverCount++;
                             _mapServersPosition.Add(_mapServersPosition.Count, processName);
+                            _transactionManagersUrls.Add(splitLine[3]);
                             break;
 
                         case "L":
                             // Lease Manager
-                            pathToProject = LauncherPaths.LeaseManagerPath;
+                            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                            {
+                                pathToProject = splitLine[2];
+                            }
+                            else
+                            {
+                                pathToProject = LauncherPaths.LeaseManagerPath;
+                            }
+                            
                             _serverCount++;
                             _mapServersPosition.Add(_mapServersPosition.Count, processName);
                             break;
 
                         case "C":
                             // Client
-                            pathToProject = LauncherPaths.ClientPath;
+                            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                            {
+                                pathToProject = splitLine[2];
+                            }
+                            else
+                            {
+                                pathToProject = LauncherPaths.ClientPath;
+                            }
                             break;
 
                         default:
@@ -128,7 +215,17 @@ namespace src
 
                     string extraArgument = splitLine[3];
 
-                    string argumentsLine = $"-- dotnet run --project {pathToProject} -n {processName} -e {extraArgument}";
+                    string argumentsLine;
+
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        argumentsLine = $"{pathToProject} -n {processName} -e {extraArgument}";
+                    }
+                    else
+                    {
+                        argumentsLine = $"-- dotnet run --project {pathToProject} -n {processName} -e {extraArgument}";
+                    }
+                    
                     _processesArgumentsMap.Add(processName, argumentsLine);
 
                     Console.WriteLine($"Read process with name {processName} of type {splitLine[2]} with extra argument {extraArgument}");
