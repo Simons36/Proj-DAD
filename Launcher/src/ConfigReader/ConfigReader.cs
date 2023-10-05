@@ -40,6 +40,8 @@ namespace src.ConfigReader
 
         private string _leaseManagerPath;
 
+        private List<string> _leaseManagerUrls;
+
         //Linux Constructor
         public ConfigReader(string configPath){
             _configPath = configPath;
@@ -52,6 +54,7 @@ namespace src.ConfigReader
             _clientsArgumentsMap = new Dictionary<int, string>();
             _transactionManagersArgumentsMap = new Dictionary<int, string>();
             _leaseManagersArgumentsMap = new Dictionary<int, string>();
+            _leaseManagerUrls = new List<string>();
             _isWindows = false;
         }
 
@@ -71,6 +74,7 @@ namespace src.ConfigReader
             _clientPath = processesPaths[0];
             _transactionManagerPath = processesPaths[1];
             _leaseManagerPath = processesPaths[2];
+            _leaseManagerUrls = new List<string>();
 
             _isWindows = true;
         }
@@ -103,6 +107,16 @@ namespace src.ConfigReader
 
                     appendToArguments(toAppend);
 
+                    foreach(int key in _leaseManagersArgumentsMap.Keys)
+                    {
+                        _leaseManagersArgumentsMap[key] += " -nl";
+                        foreach(string url in _leaseManagerUrls)
+                        {
+                            _leaseManagersArgumentsMap[key] += $" {url}";
+                        }
+                    }
+                    
+
 
                     if(!_isWindows){
 
@@ -130,8 +144,7 @@ namespace src.ConfigReader
                             {
                                 FileName = _clientPath,
                                 Arguments = argument,
-                                RedirectStandardOutput = true,
-                                UseShellExecute = false,
+                                UseShellExecute = true,
                                 CreateNoWindow = true
                             };
 
@@ -143,8 +156,7 @@ namespace src.ConfigReader
                             {
                                 FileName = _transactionManagerPath,
                                 Arguments = argument,
-                                RedirectStandardOutput = true,
-                                UseShellExecute = false,
+                                UseShellExecute = true,
                                 CreateNoWindow = true
                             };
 
@@ -152,12 +164,12 @@ namespace src.ConfigReader
                         }
 
                         foreach(string argument in _leaseManagersArgumentsMap.Values){
+
                             ProcessStartInfo processStartInfo = new ProcessStartInfo
                             {
                                 FileName = _leaseManagerPath,
                                 Arguments = argument,
-                                RedirectStandardOutput = true,
-                                UseShellExecute = false,
+                                UseShellExecute = true,
                                 CreateNoWindow = true
                             };
 
@@ -215,6 +227,8 @@ namespace src.ConfigReader
                             }
                             
                             argumentsLine += $"{pathToProject} -n {processName} -e {extraArgument}";
+
+                            _leaseManagerUrls.Add(extraArgument);
 
                             //id of lease managers starts counting after transaction managers' last id
                             _leaseManagersArgumentsMap.Add(_transactionManagersArgumentsMap.Count + _leaseManagersArgumentsMap.Count + 1, argumentsLine);

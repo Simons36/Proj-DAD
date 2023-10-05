@@ -32,9 +32,9 @@ internal class Launcher
             TransactionManagerPath = Directory.GetCurrentDirectory();
             LeaseManagerPath = Directory.GetCurrentDirectory();
 
-            ClientPath.Replace("Launcher", "Client");
-            TransactionManagerPath.Replace("Launcher", "TransactionManager");
-            LeaseManagerPath.Replace("Launcher", "LeaseManager");
+            ClientPath = ClientPath.Replace("Launcher", "Client");
+            TransactionManagerPath = TransactionManagerPath.Replace("Launcher", "TransactionManager");
+            LeaseManagerPath = LeaseManagerPath.Replace("Launcher", "LeaseManager");
 
             ClientPath += @"\Client.exe";
             TransactionManagerPath += @"\TransactionManager.exe";
@@ -42,6 +42,7 @@ internal class Launcher
 
             string[] processesPaths = new string[3];
             processesPaths[0] = ClientPath; processesPaths[1] = TransactionManagerPath; processesPaths[2] = LeaseManagerPath;
+
 
             //configReader = new ConfigReaderLinux(configPath, processesPaths);
             configReader = new ConfigReader(configPath, processesPaths);
