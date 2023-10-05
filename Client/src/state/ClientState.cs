@@ -18,15 +18,12 @@ namespace Client.src.state
 
         private TimeOnly _startingTime;
 
-        private List<string> _transactionManagerUrls;
-        public ClientState(string name, string script, int numberTimeSlots, int timeSlotDuration, TimeOnly startingTime, List<string> transactionManagerUrls)
-        {
+        public ClientState(string name, string script, int numberTimeSlots, int timeSlotDuration, TimeOnly startingTime){
             _name = name;
             _script = script;
             _numberTimeSlots = numberTimeSlots;
             _timeSlotDuration = timeSlotDuration;
             _startingTime = startingTime;
-            _transactionManagerUrls = transactionManagerUrls;
         }
 
     }
