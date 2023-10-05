@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using src;
+using src.util;
 
 internal class Launcher
 {
@@ -59,42 +60,15 @@ internal class Launcher
 
         if (isWindows)
         {
-            StartProcessWindows(configReader.Processes);
+            src.util.ProcessStart.StartProcessWindows(configReader.Processes);
         }
         else
         {
-            //TODO: implement for linux
+            src.util.ProcessStart.StartProcessLinux(configReader.Processes);
         }
        
 
     }
 
-    private static void StartProcessLinux(string projectPath)
-    {
-        Process p = new Process(){
-
-            StartInfo = new ProcessStartInfo{
-                FileName = "gnome-terminal",
-                Arguments = $"-- dotnet run --project {projectPath}",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            }
-
-        };
-
-        p.Start();
-
-        p.WaitForExit();
-    }
-
-    private static void StartProcessWindows(List<ProcessStartInfo> processStartInfoList)
-    {
-        foreach (ProcessStartInfo processStartInfo in processStartInfoList)
-        {
-            Process p = new Process();
-            p.StartInfo = processStartInfo;
-            p.Start();
-        }
-    }
+    
 }
