@@ -1,8 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "QtChpMJ+R0PDYvXQZNlNWCX4J1P3P2vH+S7Ys1RdOjSWhueNXxEG8KPaOg3949ahGBTy5w7lpT2TfdViQzIvvw==",
+  "dgSpecHash": "PCBNqJKxT7uhtnRXnQ/nyhtzYbS1nbU3pv+YE85ivW1tVgd/UTg1b1iYdFhzjG4sQfg8Li8VRWIVwgl4vaSIPw==",
   "success": true,
-  "projectFilePath": "C:\\Users\\simao\\source\\repos\\Simons36\\Proj-DAD\\Client\\Client.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "C:\\Users\\marco\\source\\repos\\Proj-DAD\\Client\\Client.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\marco\\.nuget\\packages\\google.protobuf\\3.18.0\\google.protobuf.3.18.0.nupkg.sha512",
+    "C:\\Users\\marco\\.nuget\\packages\\grpc.core\\2.40.0\\grpc.core.2.40.0.nupkg.sha512",
+    "C:\\Users\\marco\\.nuget\\packages\\grpc.core.api\\2.40.0\\grpc.core.api.2.40.0.nupkg.sha512",
+    "C:\\Users\\marco\\.nuget\\packages\\grpc.net.client\\2.39.0\\grpc.net.client.2.39.0.nupkg.sha512",
+    "C:\\Users\\marco\\.nuget\\packages\\grpc.net.common\\2.39.0\\grpc.net.common.2.39.0.nupkg.sha512",
+    "C:\\Users\\marco\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\3.0.3\\microsoft.extensions.logging.abstractions.3.0.3.nupkg.sha512",
+    "C:\\Users\\marco\\.nuget\\packages\\system.memory\\4.5.3\\system.memory.4.5.3.nupkg.sha512"
+  ],
   "logs": []
 }

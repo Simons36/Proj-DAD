@@ -7,4 +7,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Update="protos\TransactionManager.proto">
+      <GrpcServices>TransactionManager</GrpcServices>
+    </None>
+  </ItemGroup>
+
 </Project>
