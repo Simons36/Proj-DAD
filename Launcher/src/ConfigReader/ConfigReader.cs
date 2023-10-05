@@ -103,6 +103,7 @@ namespace src.ConfigReader
 
                     appendToArguments(toAppend);
 
+
                     if(!_isWindows){
 
                         List<string> arguments = new List<string>(_clientsArgumentsMap.Values)
@@ -371,6 +372,7 @@ namespace src.ConfigReader
         private void appendToArguments(string toAppend){
             foreach(int key in _clientsArgumentsMap.Keys){
                 _clientsArgumentsMap[key] += toAppend;
+                _clientsArgumentsMap[key] += $" -id {key}"; //include numeric id
             }
 
             foreach(int key in _transactionManagersArgumentsMap.Keys){
