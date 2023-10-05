@@ -1,7 +1,9 @@
 ﻿using Grpc.Core;
 using Grpc.Net.Client;
 using Client.src.state;
+using Client.src.service;
 using DInt;
+using Client.src;
 
 namespace Client
 {
@@ -11,7 +13,7 @@ namespace Client
         {
             //parameters parsed from arguments received to create client state
             string name = "", script = "";
-            int timeslotNumber = 0, duration = 0;
+            int timeslotNumber = 0, duration = 0, id = 0;
             TimeOnly startingTime = new TimeOnly();
             List<string> tMsUrls = new List<string>();
 
@@ -52,6 +54,10 @@ namespace Client
                         }
                         break;
 
+                    case "-id":
+                        id = int.Parse(args[i + 1]);
+                        break;
+
                     default:
                         break;
                 }
@@ -59,7 +65,8 @@ namespace Client
 
             Console.WriteLine("");
 
-            ClientState clientState = new ClientState(name, script, timeslotNumber, duration, startingTime, tMsUrls);
+            ClientServiceImpl clientService = new ClientServiceImpl(tMsUrls, id);
+            ScriptRunner clientState = new ScriptRunner(name, script, timeslotNumber, duration, startingTime, clientService);
 
             Console.ReadKey();
         }
@@ -73,20 +80,10 @@ namespace Client
             return true;
         }
 
-        public List<DadInt> TxSubmit(string client, List<string> keys, List<DadInt> ds)
-        {
-            /* estabelecer comunicação com transaction managers e pedir o submit (TO DO) */
-
-            return new List<DadInt>();
-        }
+        
 
 
-        public bool Status()
-        {
-            /* estabelecer comunicação com transaction managers e pedir status (TO DO) */
-
-            return true;
-        }
+        
     }
 
 }
