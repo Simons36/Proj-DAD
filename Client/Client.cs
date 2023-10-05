@@ -19,7 +19,7 @@ namespace Client{
             for (int i = 0; i < args.Length; i++){
                 string arg = args[i];
 
-                Console.WriteLine(arg);
+                Console.Write(arg + " ");
 
                 switch (arg)
                 {
@@ -55,7 +55,11 @@ namespace Client{
                 }
             }
 
+            Console.WriteLine("");
+
             ClientState clientState = new ClientState(name, script, timeslotNumber, duration, startingTime, tMsUrls);
+
+            Console.ReadKey();
         }
 
         private static bool isNotPrefix(string arg)
