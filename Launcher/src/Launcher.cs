@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using src;
 using src.util;
+using src.ConfigReader;
 
 internal class Launcher
 {
@@ -24,7 +25,7 @@ internal class Launcher
 
         //paths will be different depending on OS
         if(isWindows){
-            configPath = "..\\..\\..\\config\\" + args[0];
+            configPath = @"..\..\..\config\" + args[0];
 
             //Path for executables
             ClientPath = Directory.GetCurrentDirectory();
@@ -42,21 +43,17 @@ internal class Launcher
             string[] processesPaths = new string[3];
             processesPaths[0] = ClientPath; processesPaths[1] = TransactionManagerPath; processesPaths[2] = LeaseManagerPath;
 
+            //configReader = new ConfigReaderLinux(configPath, processesPaths);
             configReader = new ConfigReader(configPath, processesPaths);
         }
         else{
             configPath = "config/" + args[0];
 
-            // Path to client, transaction manager and lease manager
-            ClientPath = LauncherPaths.ClientPath;
-            TransactionManagerPath = LauncherPaths.TransactionManagerPath;
-            LeaseManagerPath = LauncherPaths.LeaseManagerPath;
-
             configReader = new ConfigReader(configPath);
         }
 
-        //Read config, store arguments in ConfigReader class
         configReader.ReadConfig();
+        //Read config, store arguments in ConfigReader class
 
         if (isWindows)
         {
