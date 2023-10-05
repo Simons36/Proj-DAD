@@ -9,10 +9,6 @@ namespace Client
     {
         private static void Main(string[] args)
         {
-            //prefixes of arguments received
-            string namePrefix = "-n", scriptPrefix = "-e", timeslotNumberPrefix = "-nr", durationPrefix = "-d",
-                   startingTimePrefix = "-t", tMsUrlPrefix = "-u";
-
             //parameters parsed from arguments received to create client state
             string name = "", script = "";
             int timeslotNumber = 0, duration = 0;
