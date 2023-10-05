@@ -1,18 +1,40 @@
-﻿using Grpc.Core;
-using Grpc.Net.Client;
-using System;
-using L;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
+using Grpc.Core;
+using Grpc.Net.Client;
+using L;
 
-namespace TransactionManager
+namespace TransactionManager.src.service
 {
-    public class TransactionManager : TransactionManagerService.TransactionManagerServiceBase
+    public class TransactionManagerServiceImpl : TransactionManagerService.TransactionManagerServiceBase
     {
-        private GrpcChannel channel;
+        private int _id;
+        private List<string> _lMsUrls;
         private HashSet<DadInt> _dadInts = new HashSet<DadInt>();
         private Lease _lease = new Lease();
+        private TransactionManagerService.TransactionManagerServiceClient _stub;
 
-        public TransactionManager() { }
+        public TransactionManagerServiceImpl(List<string> lMsUrls, int id) 
+        {
+            _lMsUrls = lMsUrls;
+            _id = id;
+            createStub();
+        }
+
+        private void createStub()
+        {
+            int serverToConnect = _id % _lMsUrls.Count;
+
+            // ^ aqui n interessa pois temos de mandar request a todos os lease managers, só pus pois tive de fazer isto à pressa sorry guys
+
+            GrpcChannel grpcChannel = GrpcChannel.ForAddress(_lMsUrls[serverToConnect]);
+
+            _stub = new TransactionManagerService.TransactionManagerServiceClient(grpcChannel);
+        }
 
         public HashSet<DadInt> TransactionDadInts
         {
@@ -64,22 +86,6 @@ namespace TransactionManager
         public void LeaseSolicitation(HashSet<DadInt> ds)
         {
             // estabelecer comunicação com lease managers e pedir lease (TO DO)
-        }
-
-        private static void Main(string[] args)
-        {
-            Console.WriteLine("Hello, World! transactionManager");
-            foreach (string arg in args)
-            {
-                Console.WriteLine(arg);
-            }
-            Console.ReadLine();
-
-        }
-
-        public void Run(string[] args)
-        {
-            Main(args);
         }
     }
 }
