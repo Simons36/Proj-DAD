@@ -1,6 +1,5 @@
 ﻿using Grpc.Core;
 using Grpc.Net.Client;
-using Client.src.state;
 using Client.src.service;
 using DInt;
 using Client.src;
@@ -66,17 +65,23 @@ namespace Client
             Console.WriteLine("");
 
             ClientServiceImpl clientService = new ClientServiceImpl(tMsUrls, id);
-            ScriptRunner clientState = new ScriptRunner(name, script, timeslotNumber, duration, startingTime, clientService);
+            ScriptRunner scriptRunner = new ScriptRunner(name, /*script*/ "DADTKV_client_script_sample.txt", timeslotNumber, duration, startingTime, clientService);
+            scriptRunner.RunScript();
 
             Console.ReadKey();
         }
 
         private static bool isNotPrefix(string arg)
         {
-            if (arg.Equals("-n") || arg.Equals("-e") || arg.Equals("-nr") || arg.Equals("-d") || arg.Equals("-t") || arg.Equals("-u"))
-            {
-                return false;
-            }
+            if (arg.Equals("-n")  || 
+                arg.Equals("-e")  || 
+                arg.Equals("-nr") || 
+                arg.Equals("-d")  || 
+                arg.Equals("-t")  || 
+                arg.Equals("-u")  || 
+                arg.Equals("-ul") || 
+                arg.Equals("-id") ) return false;
+            
             return true;
         }
 
