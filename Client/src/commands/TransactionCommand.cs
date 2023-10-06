@@ -14,9 +14,9 @@ namespace Client.src.commands
 
         private List<string> _dadIntsToRead;
 
-        private List<DInt.DadInt> _dadIntsToWrite;
+        private List<Common.DadInt> _dadIntsToWrite;
 
-        public TransactionCommand(ClientServiceImpl clientService, string clientName, List<string> dadIntsToRead, List<DInt.DadInt> dadIntsToWrite) : base()
+        public TransactionCommand(ClientServiceImpl clientService, string clientName, List<string> dadIntsToRead, List<Common.DadInt> dadIntsToWrite) : base()
         {
             _clientService = clientService;
             _clientName = clientName;
@@ -27,7 +27,7 @@ namespace Client.src.commands
         public override void Execute()
         {
             Console.WriteLine("Executing transaction command");
-            List<DInt.DadInt> results;
+            List<Common.DadInt> results;
 
             try{
                  results = _clientService.TxSubmit(_clientName, _dadIntsToRead, _dadIntsToWrite);
@@ -38,7 +38,7 @@ namespace Client.src.commands
             }
 
             Console.WriteLine("Received from transaction:");
-            foreach (DInt.DadInt dadInt in results){
+            foreach (Common.DadInt dadInt in results){
                 Console.WriteLine(dadInt.ToString());
             }
             

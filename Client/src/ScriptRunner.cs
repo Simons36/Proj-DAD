@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Client.src.commands;
 using Client.src.service;
+using Common;
 
 namespace Client.src
 {
@@ -52,6 +53,9 @@ namespace Client.src
             }
 
             int timeToRun = _numberTimeSlots * _timeSlotDuration;
+
+            //TODO: Start execution at the right time
+            Thread.Sleep(8000); //for now, wait 8 seconds to make sure all servers are up
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -108,7 +112,7 @@ namespace Client.src
 
                         //writes part
 
-                        List<DInt.DadInt> listDadIntsToWrite = new List<DInt.DadInt>();
+                        List<Common.DadInt> listDadIntsToWrite = new List<Common.DadInt>();
 
                         string dadIntsToWrite = lineSplit[2].Remove(0, 1);
                         dadIntsToWrite = dadIntsToWrite.Remove(dadIntsToWrite.Length - 1, 1);
@@ -126,11 +130,7 @@ namespace Client.src
                         }
 
                         for(int i = 0; i < listParsedDadInts.Count; i += 2){
-                            DInt.DadInt dadIntToAdd = new DInt.DadInt();
-
-                            dadIntToAdd.Key = listParsedDadInts[i];
-
-                            dadIntToAdd.Value = int.Parse(listParsedDadInts[i + 1]);
+                            Common.DadInt dadIntToAdd = new Common.DadInt(listParsedDadInts[i], int.Parse(listParsedDadInts[i + 1]));
 
                             listDadIntsToWrite.Add(dadIntToAdd);
                         }

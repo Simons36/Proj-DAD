@@ -1,7 +1,7 @@
 ﻿using Grpc.Core;
 using Grpc.Net.Client;
 using Client.src.service;
-using DInt;
+using Common;
 using Client.src;
 
 namespace Client

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Net.Client;
+using Client.src.service.util;
 
 namespace Client.src.service
 {
@@ -39,10 +40,22 @@ namespace Client.src.service
         }
 
 
-        public List<DInt.DadInt> TxSubmit(string client, List<string> keys, List<DInt.DadInt> ds){
-            /* estabelecer comunicação com transaction managers e pedir o submit (TO DO) */
+        public List<Common.DadInt> TxSubmit(string client, List<string> keysToRead, List<Common.DadInt> dadIntsToWrite){
+            List<DadInt> parsedDadInts = new List<DadInt>();
 
-            return new List<DInt.DadInt>();
+            foreach(Common.DadInt unparsedDadInt in dadIntsToWrite){
+                parsedDadInts.Add(new DadInt{ Key = unparsedDadInt.Key, Value = unparsedDadInt.Value});
+            }
+
+            List<DadInt> receivedList = _stub.TxSubmit(new TxSubmitRequest { Client = client, ReadDads = { keysToRead }, WriteDads = { parsedDadInts } })
+                                             .DadInts.ToList();
+
+            List<Common.DadInt> commonDadInts = new List<Common.DadInt>();
+            foreach(DadInt dadInt in receivedList){
+                commonDadInts.Add(new Common.DadInt{ Key = dadInt.Key, Value = dadInt.Value});
+            }
+
+            return commonDadInts;
         }
 
         public bool Status()

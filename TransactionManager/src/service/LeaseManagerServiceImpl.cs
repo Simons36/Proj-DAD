@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TransactionManager.src.state
+namespace TransactionManager.src.service
 {
-    public class ServerState
+    public class LeaseManagerServiceImpl
     {
         
     }
