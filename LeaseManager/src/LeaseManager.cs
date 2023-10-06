@@ -1,4 +1,7 @@
-﻿namespace LeaseManager.src
+﻿using Grpc.Core;
+using LeaseManager.src.service;
+
+namespace LeaseManager.src
 {
     public class LeaseManager
     {
@@ -8,6 +11,7 @@
             string name = "";
             int timeslotNumber = 0,
                 duration = 0;
+            string currLM = "";
             TimeOnly startingTime = new TimeOnly();
             List<string> leaseManagerUrls = new List<string>();
 
@@ -17,9 +21,13 @@
                 string arg = args[i];
 
                 switch (arg)
-                {
+                {   
                     case "-n":
                         name = args[i + 1];
+                        break;
+
+                    case "-e":
+                        currLM = args[i + 1];
                         break;
 
                     case "-nr":
@@ -58,6 +66,7 @@
             // Display the extracted values for verification
             Console.WriteLine("\nExtracted values:");
             Console.WriteLine("Name: " + name);
+            Console.WriteLine("Current Lease Manager: " + currLM);
             Console.WriteLine("Timeslot Number: " + timeslotNumber);
             Console.WriteLine("Duration: " + duration);
             Console.WriteLine("Starting Time: " + startingTime);
@@ -66,7 +75,18 @@
             {
                 Console.WriteLine(url);
             }
-            Console.ReadLine();
+
+            var server = new Server
+            {
+                Services = { LeaseManagerService.BindService(new LeaseManagerServiceImpl(name, timeslotNumber, duration, startingTime, leaseManagerUrls)) },
+                Ports = { new ServerPort("localhost", int.Parse(currLM.Split(':')[2]), ServerCredentials.Insecure) }
+            };
+            
+            server.Start();
+
+            Console.WriteLine("Lease Manager server listening on port " + currLM.Split(':')[2]);
+
+            while (true);
         }
     }
 }
