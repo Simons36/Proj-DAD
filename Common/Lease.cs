@@ -1,8 +1,11 @@
-﻿using DInt;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace L
+namespace Common
 {
-    public class Lease
+    public struct Lease
     {
         private string _key;
         private HashSet<DadInt> _dadInts;

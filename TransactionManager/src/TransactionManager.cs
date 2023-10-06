@@ -1,10 +1,12 @@
 ﻿using Grpc.Core;
 using Grpc.Net.Client;
 using System;
-using L;
+using Common;
 using System.Threading.Tasks;
 using TransactionManager.src.service;
 using TransactionManager.src;
+using System.Security.AccessControl;
+using TransactionManager.src.state;
 
 namespace TransactionManager
 {
@@ -12,8 +14,7 @@ namespace TransactionManager
     {
         private static void Main(string[] args)
         {
-            //Aqui n sei bem que tive de fazer à pressa sorry
-            string name = "", script = "";
+            string name = "", thisUrl = "";
             int timeslotNumber = 0, duration = 0, id = 0;
             TimeOnly startingTime = new TimeOnly();
             List<string> tMsUrls = new List<string>();
@@ -33,7 +34,7 @@ namespace TransactionManager
                         break;
 
                     case "-e":
-                        script = args[i + 1];
+                        thisUrl = args[i + 1];
                         break;
 
                     case "-nr":
@@ -55,10 +56,6 @@ namespace TransactionManager
                         }
                         break;
 
-                    case "-id":
-                        id = int.Parse(args[i + 1]);
-                        break;
-
                     default:
                         break;
                 }
@@ -66,9 +63,15 @@ namespace TransactionManager
 
             Console.WriteLine("");
 
-            TransactionManagerServiceImpl transactionService = new TransactionManagerServiceImpl(tMsUrls, id);
+            //TransactionManagerServiceImpl transactionService = new TransactionManagerServiceImpl(thisUrl, tMsUrls);
+            TransactionManagerState state = new TransactionManagerState();
+            ClientServiceImpl clientService = new ClientServiceImpl(state);
+
+            startServer(thisUrl, clientService);
+
 
             Console.ReadKey();
+
         }
 
         private static bool isNotPrefix(string arg)
@@ -78,6 +81,34 @@ namespace TransactionManager
                 return false;
             }
             return true;
+        }
+
+        private static void startServer(string thisUrl, ClientServiceImpl clientService)
+        {
+            string[] splitString = thisUrl.Split(":");
+
+            string hostname = splitString[1];
+            hostname = hostname.Remove(0, 2);
+
+            int port = int.Parse(splitString[2]);
+
+            Console.WriteLine("Starting server on " + hostname);
+            Console.WriteLine("Starting server on " + port);
+
+            try{
+                Server server = new Server
+                {
+                    Services = { ClientService.BindService(clientService) },
+                    Ports = { new ServerPort(hostname, port, ServerCredentials.Insecure) }
+                };
+                server.Start();
+            }catch(Exception e){
+                Console.WriteLine("Error starting server: " + e.Message);
+            }
+
+
+            Console.WriteLine("Server listening on " + hostname + ":" + port);
+            while (true);
         }
     }
 }

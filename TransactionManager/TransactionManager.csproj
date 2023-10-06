@@ -15,7 +15,11 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<Protobuf Include="protos\TransactionManager.proto" />
+		<Protobuf Include="proto\Client.proto" GrpcService="Server"/>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Common\Common.csproj" />
 	</ItemGroup>
 
 </Project>

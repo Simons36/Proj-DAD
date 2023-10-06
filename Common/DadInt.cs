@@ -1,11 +1,19 @@
-﻿namespace DInt
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Common
 {
-    public class DadInt
+    public struct DadInt
     {
         private string _key;
         private int _value;
 
-        public DadInt() { }
+        public DadInt(string Key, int Value) {
+            _key = Key;
+            _value = Value;
+        }
 
         public string Key
         {
