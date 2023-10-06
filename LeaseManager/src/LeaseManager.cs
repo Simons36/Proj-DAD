@@ -1,4 +1,4 @@
-﻿namespace LeaseManager
+﻿namespace LeaseManager.src
 {
     public class LeaseManager
     {
