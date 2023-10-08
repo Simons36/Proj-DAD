@@ -39,7 +39,7 @@ namespace Client.src.commands
 
             Console.WriteLine("Received from transaction:");
             foreach (Common.DadInt dadInt in results){
-                Console.WriteLine(dadInt.ToString());
+                Console.Write("DadInt received: <" + dadInt.Key + "> " + dadInt.Value);
             }
             
             Console.WriteLine();
