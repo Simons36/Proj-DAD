@@ -34,7 +34,7 @@ namespace Client.src
                 _scriptPath = "../Client/scripts/" + script;
             }
             else{
-                _scriptPath = "..\\scripts\\" + script;
+                _scriptPath = "..\\..\\..\\..\\Client\\scripts\\" + script;
             }
 
             _numberTimeSlots = numberTimeSlots;
