@@ -3,6 +3,7 @@ using Grpc.Net.Client;
 using Client.src.service;
 using Common;
 using Client.src;
+using Client.src.exceptions;
 
 namespace Client
 {
@@ -66,8 +67,16 @@ namespace Client
 
             ClientServiceImpl clientService = new ClientServiceImpl(tMsUrls, id);
             ScriptRunner scriptRunner = new ScriptRunner(name, /*script*/ "DADTKV_client_script_sample.txt", timeslotNumber, duration, startingTime, clientService);
-            scriptRunner.RunScript();
 
+            try{
+                scriptRunner.RunScript();
+            }catch(InvalidStartingTimeException e){
+                Console.WriteLine(e.Message);
+            }catch(Exception e){
+                Console.WriteLine(e.Message);
+            }
+
+            Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
         }
 
