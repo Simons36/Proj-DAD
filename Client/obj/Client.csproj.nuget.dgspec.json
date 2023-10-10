@@ -1,34 +1,4 @@
-{
-  "format": 1,
-  "restore": {
-    "/home/simaosilva/uni/DAD/Proj-DAD/Client/Client.csproj": {}
-  },
-  "projects": {
-    "/home/simaosilva/uni/DAD/Proj-DAD/Client/Client.csproj": {
-      "version": "1.0.0",
-      "restore": {
-        "projectUniqueName": "/home/simaosilva/uni/DAD/Proj-DAD/Client/Client.csproj",
-        "projectName": "Client",
-        "projectPath": "C:\\Users\\Utilizador\\Documents\\Proj-DAD\\Client\\Client.csproj",
-        "packagesPath": "C:\\Users\\Utilizador\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Utilizador\\Documents\\Proj-DAD\\Client\\obj\\",
-        "projectStyle": "PackageReference",
-        "configFilePaths": [
-          "/home/simaosilva/.nuget/NuGet/NuGet.Config"
-        ],
-        "originalTargetFrameworks": [
-          "net7.0"
-        ],
-        "sources": {
-          "https://api.nuget.org/v3/index.json": {}
-        },
-        "frameworks": {
-          "net7.0": {
-            "targetAlias": "net7.0",
-            "projectReferences": {
-              "/home/simaosilva/uni/DAD/Proj-DAD/Common/Common.csproj": {
-                "projectPath": "/home/simaosilva/uni/DAD/Proj-DAD/Common/Common.csproj"
-              }
+
             }
           }
         },
@@ -81,7 +51,7 @@
         }
       }
     },
-    "/home/simaosilva/uni/DAD/Proj-DAD/Common/Common.csproj": {
+    "C:\\Users\\Utilizador\\Documents\\Proj-DAD\\TransactionManager\\TransactionManager.csproj": {
       "version": "1.0.0",
       "restore": {
         "projectUniqueName": "C:\\Users\\Utilizador\\Documents\\Proj-DAD\\TransactionManager\\TransactionManager.csproj",
@@ -90,8 +60,13 @@
         "packagesPath": "C:\\Users\\Utilizador\\.nuget\\packages\\",
         "outputPath": "C:\\Users\\Utilizador\\Documents\\Proj-DAD\\TransactionManager\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "/home/simaosilva/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\Utilizador\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net7.0"
