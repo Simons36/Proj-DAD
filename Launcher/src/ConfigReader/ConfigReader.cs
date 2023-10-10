@@ -98,15 +98,27 @@ namespace src.ConfigReader
                         ReadConfigLine(line);
                     }
 
-                    string toAppend = $" -nr {_numberOfTimeSlots.ToString()} -d {_timeSlotDuration.ToString()} -t {_startingTime.TimeOfDay.ToString()} -u";
-
-                    foreach(string url in _transactionManagersUrls){
-
-                        toAppend += $" {url}";
-                    }
+                    string toAppend = $" -nr {_numberOfTimeSlots.ToString()} -d {_timeSlotDuration.ToString()} -t {_startingTime.TimeOfDay.ToString()}";
 
                     appendToArguments(toAppend);
+                    
+                    //add tm urls to client arguments
+                    foreach(int key in _clientsArgumentsMap.Keys){
+                        _clientsArgumentsMap[key] += " -u";
+                        foreach(string url in _transactionManagersUrls){
+                            _clientsArgumentsMap[key] += $" {url}";
+                        }
+                    }
 
+                    //add tm urls to transaction manager arguments
+                    foreach(int key in _transactionManagersArgumentsMap.Keys){
+                        _transactionManagersArgumentsMap[key] += " -u";
+                        foreach(string url in _transactionManagersUrls){
+                            _transactionManagersArgumentsMap[key] += $" {url}";
+                        }
+                    }
+
+                    //add lm urls to lease manager arguments
                     foreach(int key in _leaseManagersArgumentsMap.Keys)
                     {
                         _leaseManagersArgumentsMap[key] += " -nl";
@@ -164,6 +176,7 @@ namespace src.ConfigReader
                         }
 
                         foreach(string argument in _leaseManagersArgumentsMap.Values){
+                            
 
                             ProcessStartInfo processStartInfo = new ProcessStartInfo
                             {
@@ -304,9 +317,11 @@ namespace src.ConfigReader
                             if(!_serversThatCrashed.Contains(id)){
                                 
                                 if(_transactionManagersArgumentsMap.ContainsKey(id))
-                                    _transactionManagersArgumentsMap[id] += $" -c {timeSlot}"; //introduce time slot to crash
-                                else
-                                    _leaseManagersArgumentsMap[id] += $" -c {timeSlot}"; //introduce time slot to crash
+                                    _transactionManagersArgumentsMap[id] += $" -crashed {timeSlot}"; //introduce time slot to crash
+                                else{
+                                    _leaseManagersArgumentsMap[id] += $" -crashed {timeSlot}"; //introduce time slot to crash
+
+                                }
                                 _serversThatCrashed.Add(id);
 
                             }

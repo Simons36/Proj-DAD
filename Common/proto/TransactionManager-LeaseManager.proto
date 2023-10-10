@@ -1,21 +1,16 @@
 ﻿syntax = "proto3";
 
-service LeaseManagerService{
+service LeaseSolicitationService{
     rpc LeaseSolicitation(LeaseRequest) returns (LeaseReply);
 }
 
-message DadInt{
-    string key = 1;
-    int32 value = 2;
-}
-
 message Lease{
-    string key = 1;
-    repeated DadInt dadInts = 2;
+    string transactionManagerName = 1;
+    repeated string dadIntsKeys = 2;
 }
 
 message LeaseRequest{
-    repeated DadInt dadInts = 1;
+    Lease requestedLease = 1;
 }
 
 message LeaseReply{

@@ -1,7 +1,7 @@
 
 namespace LeaseManager.src.service {
 
-    public class LeaseManagerServiceImpl : LeaseManagerService.LeaseManagerServiceBase
+    public class LeaseManagerServiceImpl : LeaseSolicitationService.LeaseSolicitationServiceBase
     {
         private string name;
         private int timeslotNumber;
