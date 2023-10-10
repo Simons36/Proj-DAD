@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using Client.src.commands;
 using Client.src.service;
-using Common;
+using Client.src.exceptions;
 
 namespace Client.src
 {
@@ -54,8 +50,17 @@ namespace Client.src
 
             int timeToRun = _numberTimeSlots * _timeSlotDuration;
 
-            //TODO: Start execution at the right time
-            Thread.Sleep(8000); //for now, wait 8 seconds to make sure all servers are up
+            DateTime currTime = DateTime.Now;
+            TimeSpan timeDiff = _startingTime.ToTimeSpan() - currTime.TimeOfDay; // time diff between current time and starting time
+
+            if(timeDiff.TotalMilliseconds < 0){//if starting time has already passed
+                throw new InvalidStartingTimeException("Starting time is invalid (already passed)");
+            }
+            
+            //wait until starting time
+            Thread.Sleep(((int)timeDiff.TotalMilliseconds) );
+            Console.WriteLine("time diff " + timeDiff.ToString());
+
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
