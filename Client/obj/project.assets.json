@@ -132,19 +132,14 @@
           "lib/netcoreapp2.1/_._": {}
         }
       },
-      "TransactionManager/1.0.0": {
+      "Common/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v7.0",
-        "dependencies": {
-          "Google.Protobuf": "3.18.0",
-          "Grpc.Core": "2.40.0",
-          "Grpc.Net.Client": "2.39.0"
-        },
         "compile": {
-          "bin/placeholder/TransactionManager.dll": {}
+          "bin/placeholder/Common.dll": {}
         },
         "runtime": {
-          "bin/placeholder/TransactionManager.dll": {}
+          "bin/placeholder/Common.dll": {}
         }
       }
     }
@@ -345,27 +340,32 @@
         "version.txt"
       ]
     },
-    "TransactionManager/1.0.0": {
+    "Common/1.0.0": {
       "type": "project",
-      "path": "../TransactionManager/TransactionManager.csproj",
-      "msbuildProject": "../TransactionManager/TransactionManager.csproj"
+      "path": "../Common/Common.csproj",
+      "msbuildProject": "../Common/Common.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net7.0": [
+      "Common >= 1.0.0",
       "Google.Protobuf >= 3.18.0",
       "Grpc.Core >= 2.40.0",
       "Grpc.Net.Client >= 2.39.0",
-      "Grpc.Tools >= 2.40.0",
-      "TransactionManager >= 1.0.0"
+      "Grpc.Tools >= 2.40.0"
     ]
   },
   "packageFolders": {
+<<<<<<< Updated upstream
     "C:\\Users\\marco\\.nuget\\packages\\": {}
+=======
+    "/home/simaosilva/.nuget/packages/": {}
+>>>>>>> Stashed changes
   },
   "project": {
     "version": "1.0.0",
     "restore": {
+<<<<<<< Updated upstream
       "projectUniqueName": "C:\\Users\\marco\\source\\repos\\Proj-DAD\\Client\\Client.csproj",
       "projectName": "Client",
       "projectPath": "C:\\Users\\marco\\source\\repos\\Proj-DAD\\Client\\Client.csproj",
@@ -375,20 +375,38 @@
       "configFilePaths": [
         "C:\\Users\\marco\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+=======
+      "projectUniqueName": "/home/simaosilva/uni/DAD/Proj-DAD/Client/Client.csproj",
+      "projectName": "Client",
+      "projectPath": "/home/simaosilva/uni/DAD/Proj-DAD/Client/Client.csproj",
+      "packagesPath": "/home/simaosilva/.nuget/packages/",
+      "outputPath": "/home/simaosilva/uni/DAD/Proj-DAD/Client/obj/",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "/home/simaosilva/.nuget/NuGet/NuGet.Config"
+>>>>>>> Stashed changes
       ],
       "originalTargetFrameworks": [
         "net7.0"
       ],
       "sources": {
+<<<<<<< Updated upstream
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+=======
+>>>>>>> Stashed changes
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net7.0": {
           "targetAlias": "net7.0",
           "projectReferences": {
+<<<<<<< Updated upstream
             "C:\\Users\\marco\\source\\repos\\Proj-DAD\\TransactionManager\\TransactionManager.csproj": {
               "projectPath": "C:\\Users\\marco\\source\\repos\\Proj-DAD\\TransactionManager\\TransactionManager.csproj"
+=======
+            "/home/simaosilva/uni/DAD/Proj-DAD/Common/Common.csproj": {
+              "projectPath": "/home/simaosilva/uni/DAD/Proj-DAD/Common/Common.csproj"
+>>>>>>> Stashed changes
             }
           }
         }
@@ -438,8 +456,16 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.401\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/7.0.111/RuntimeIdentifierGraph.json"
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "Undefined",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Problem reading the cache file /home/simaosilva/uni/DAD/Proj-DAD/Client/obj/project.nuget.cache : Invalid property identifier character: <. Path 'version', line 3, position 0."
+    }
+  ]
 }

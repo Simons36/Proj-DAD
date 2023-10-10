@@ -1,35 +1,33 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\marco\\source\\repos\\Proj-DAD\\Client\\Client.csproj": {}
+    "/home/simaosilva/uni/DAD/Proj-DAD/Client/Client.csproj": {}
   },
   "projects": {
-    "C:\\Users\\marco\\source\\repos\\Proj-DAD\\Client\\Client.csproj": {
+    "/home/simaosilva/uni/DAD/Proj-DAD/Client/Client.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\marco\\source\\repos\\Proj-DAD\\Client\\Client.csproj",
+        "projectUniqueName": "/home/simaosilva/uni/DAD/Proj-DAD/Client/Client.csproj",
         "projectName": "Client",
-        "projectPath": "C:\\Users\\marco\\source\\repos\\Proj-DAD\\Client\\Client.csproj",
-        "packagesPath": "C:\\Users\\marco\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\marco\\Source\\Repos\\Proj-DAD\\Client\\obj\\",
+        "projectPath": "C:\\Users\\Utilizador\\Documents\\Proj-DAD\\Client\\Client.csproj",
+        "packagesPath": "C:\\Users\\Utilizador\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Utilizador\\Documents\\Proj-DAD\\Client\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\marco\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/home/simaosilva/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net7.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net7.0": {
             "targetAlias": "net7.0",
             "projectReferences": {
-              "C:\\Users\\marco\\source\\repos\\Proj-DAD\\TransactionManager\\TransactionManager.csproj": {
-                "projectPath": "C:\\Users\\marco\\source\\repos\\Proj-DAD\\TransactionManager\\TransactionManager.csproj"
+              "/home/simaosilva/uni/DAD/Proj-DAD/Common/Common.csproj": {
+                "projectPath": "/home/simaosilva/uni/DAD/Proj-DAD/Common/Common.csproj"
               }
             }
           }
@@ -79,28 +77,28 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.401\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/7.0.111/RuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\marco\\source\\repos\\Proj-DAD\\TransactionManager\\TransactionManager.csproj": {
+    "/home/simaosilva/uni/DAD/Proj-DAD/Common/Common.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\marco\\source\\repos\\Proj-DAD\\TransactionManager\\TransactionManager.csproj",
+        "projectUniqueName": "C:\\Users\\Utilizador\\Documents\\Proj-DAD\\TransactionManager\\TransactionManager.csproj",
         "projectName": "TransactionManager",
-        "projectPath": "C:\\Users\\marco\\source\\repos\\Proj-DAD\\TransactionManager\\TransactionManager.csproj",
-        "packagesPath": "C:\\Users\\marco\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\marco\\Source\\Repos\\Proj-DAD\\TransactionManager\\obj\\",
+        "projectPath": "C:\\Users\\Utilizador\\Documents\\Proj-DAD\\TransactionManager\\TransactionManager.csproj",
+        "packagesPath": "C:\\Users\\Utilizador\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Utilizador\\Documents\\Proj-DAD\\TransactionManager\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\marco\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/home/simaosilva/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net7.0"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -118,26 +116,6 @@
       "frameworks": {
         "net7.0": {
           "targetAlias": "net7.0",
-          "dependencies": {
-            "Google.Protobuf": {
-              "target": "Package",
-              "version": "[3.18.0, )"
-            },
-            "Grpc.Core": {
-              "target": "Package",
-              "version": "[2.40.0, )"
-            },
-            "Grpc.Net.Client": {
-              "target": "Package",
-              "version": "[2.39.0, )"
-            },
-            "Grpc.Tools": {
-              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[2.40.0, )"
-            }
-          },
           "imports": [
             "net461",
             "net462",
@@ -154,7 +132,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.401\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/7.0.111/RuntimeIdentifierGraph.json"
         }
       }
     }

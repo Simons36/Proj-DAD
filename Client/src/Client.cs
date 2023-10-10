@@ -23,39 +23,55 @@ namespace Client
             {
                 string arg = args[i];
 
-                Console.Write(arg + " ");
-
                 switch (arg)
                 {
                     case "-n":
+                        Console.WriteLine();
                         name = args[i + 1];
+
+                        Console.WriteLine("Name: " + name);
                         break;
 
                     case "-e":
                         script = args[i + 1];
+
+                        Console.WriteLine("Script: " + script);
                         break;
 
                     case "-nr":
+                        Console.WriteLine();
                         timeslotNumber = int.Parse(args[i + 1]);
+
+                        Console.WriteLine("Number of timeslots: " + timeslotNumber);
                         break;
 
                     case "-d":
                         duration = int.Parse(args[i + 1]);
+
+                        Console.WriteLine("Duration of each time slot (ms): " + duration);
                         break;
 
                     case "-t":
                         startingTime = TimeOnly.Parse(args[i + 1]);
+
+                        Console.WriteLine("Starting time: " + startingTime);
                         break;
 
                     case "-u":
+                        Console.WriteLine();
+                        Console.WriteLine("Transaction Managers' URLs:");
                         for (int k = i + 1; (k < args.Length) && (isNotPrefix(args[k])); k++)
                         {
+                            Console.WriteLine("  - " + args[k]);
                             tMsUrls.Add(args[k]);
                         }
                         break;
 
                     case "-id":
+                        Console.WriteLine();
                         id = int.Parse(args[i + 1]);
+
+                        Console.WriteLine("Client ID (for internal use): " + id);
                         break;
 
                     default:
@@ -63,7 +79,7 @@ namespace Client
                 }
             }
 
-            Console.WriteLine("");
+            Console.WriteLine();
 
             ClientServiceImpl clientService = new ClientServiceImpl(tMsUrls, id);
             ScriptRunner scriptRunner = new ScriptRunner(name, /*script*/ "DADTKV_client_script_sample.txt", timeslotNumber, duration, startingTime, clientService);

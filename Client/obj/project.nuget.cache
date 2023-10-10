@@ -1,5 +1,6 @@
 {
   "version": 2,
+<<<<<<< Updated upstream
   "dgSpecHash": "mBRAzziCmjFZqLBbCilEk2XvqUcfNp1121MNNrIz8nxqNkNUMpS2/oVtjTz2KQycTGC9u2ZlowgTxkziG6TFfA==",
   "success": true,
   "projectFilePath": "C:\\Users\\marco\\source\\repos\\Proj-DAD\\Client\\Client.csproj",
@@ -12,6 +13,27 @@
     "C:\\Users\\marco\\.nuget\\packages\\grpc.tools\\2.40.0\\grpc.tools.2.40.0.nupkg.sha512",
     "C:\\Users\\marco\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\3.0.3\\microsoft.extensions.logging.abstractions.3.0.3.nupkg.sha512",
     "C:\\Users\\marco\\.nuget\\packages\\system.memory\\4.5.3\\system.memory.4.5.3.nupkg.sha512"
+=======
+  "dgSpecHash": "0kRTz3bVAL4WB1e5ZCwDAJ6rVtvYyoENsg3Sv8ToEExN6efLWxE7GIyisivtHmGBPiRHlZtzX6ZY5oWSGDYSCg==",
+  "success": true,
+  "projectFilePath": "/home/simaosilva/uni/DAD/Proj-DAD/Client/Client.csproj",
+  "expectedPackageFiles": [
+    "/home/simaosilva/.nuget/packages/google.protobuf/3.18.0/google.protobuf.3.18.0.nupkg.sha512",
+    "/home/simaosilva/.nuget/packages/grpc.core/2.40.0/grpc.core.2.40.0.nupkg.sha512",
+    "/home/simaosilva/.nuget/packages/grpc.core.api/2.40.0/grpc.core.api.2.40.0.nupkg.sha512",
+    "/home/simaosilva/.nuget/packages/grpc.net.client/2.39.0/grpc.net.client.2.39.0.nupkg.sha512",
+    "/home/simaosilva/.nuget/packages/grpc.net.common/2.39.0/grpc.net.common.2.39.0.nupkg.sha512",
+    "/home/simaosilva/.nuget/packages/grpc.tools/2.40.0/grpc.tools.2.40.0.nupkg.sha512",
+    "/home/simaosilva/.nuget/packages/microsoft.extensions.logging.abstractions/3.0.3/microsoft.extensions.logging.abstractions.3.0.3.nupkg.sha512",
+    "/home/simaosilva/.nuget/packages/system.memory/4.5.3/system.memory.4.5.3.nupkg.sha512"
+>>>>>>> Stashed changes
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "Undefined",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Problem reading the cache file /home/simaosilva/uni/DAD/Proj-DAD/Client/obj/project.nuget.cache : Invalid property identifier character: <. Path 'version', line 3, position 0."
+    }
+  ]
 }
