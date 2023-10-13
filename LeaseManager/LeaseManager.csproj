@@ -15,7 +15,15 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <Protobuf Include="../Common/proto/TransactionManager-LeaseManager.proto" GrpcServices="Server"/>
+
+    <Protobuf Include="../Common/proto/ProtoStructs.proto" GrpcServices="None"/>
+    <Protobuf Include="../Common/proto/TransactionManager-LeaseManager.proto" GrpcServices="Server" />
+    <Protobuf Include="proto/PaxosInternalService.proto" GrpcServices="Both" />
+
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
 
 </Project>
