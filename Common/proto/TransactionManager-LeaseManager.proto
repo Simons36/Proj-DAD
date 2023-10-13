@@ -1,19 +1,21 @@
 ﻿syntax = "proto3";
 
-service LeaseSolicitationService{
-    rpc LeaseSolicitation(LeaseRequest) returns (LeaseReply);
-}
+//package common.proto;
 
-message Lease{
-    string transactionManagerName = 1;
-    repeated string dadIntsKeys = 2;
+import "ProtoStructs.proto";
+
+service LeaseSolicitationService{
+    rpc LeaseSolicitation(LeaseRequest) returns (EmptyReply);
+    rpc LeaseListResponse(LeaseReply) returns (EmptyReply);
 }
 
 message LeaseRequest{
-    Lease requestedLease = 1;
+    ProtoLease requestedLease = 1;
 }
 
 message LeaseReply{
     int32 epoch = 1;
-    repeated Lease leases = 2;
+    repeated ProtoLease leases = 2;
 }
+
+message EmptyReply{}
