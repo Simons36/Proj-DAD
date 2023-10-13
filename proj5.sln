@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransactionManager", "Trans
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Launcher", "Launcher\Launcher.csproj", "{1B739685-88E3-4835-83A2-83E146771A62}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{9AEEEC37-88F4-4C51-9DE5-922FEED22138}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{1B739685-88E3-4835-83A2-83E146771A62}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1B739685-88E3-4835-83A2-83E146771A62}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1B739685-88E3-4835-83A2-83E146771A62}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9AEEEC37-88F4-4C51-9DE5-922FEED22138}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AEEEC37-88F4-4C51-9DE5-922FEED22138}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AEEEC37-88F4-4C51-9DE5-922FEED22138}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AEEEC37-88F4-4C51-9DE5-922FEED22138}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
