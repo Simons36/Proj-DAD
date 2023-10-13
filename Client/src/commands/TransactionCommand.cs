@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Client.src.service;
+using Common.structs;
 
 namespace Client.src.commands
 {
@@ -14,9 +15,9 @@ namespace Client.src.commands
 
         private List<string> _dadIntsToRead;
 
-        private List<Common.DadInt> _dadIntsToWrite;
+        private List<DadInt> _dadIntsToWrite;
 
-        public TransactionCommand(ClientServiceImpl clientService, string clientName, List<string> dadIntsToRead, List<Common.DadInt> dadIntsToWrite) : base()
+        public TransactionCommand(ClientServiceImpl clientService, string clientName, List<string> dadIntsToRead, List<DadInt> dadIntsToWrite) : base()
         {
             _clientService = clientService;
             _clientName = clientName;
@@ -27,7 +28,7 @@ namespace Client.src.commands
         public override void Execute()
         {
             Console.WriteLine("Executing transaction command");
-            List<Common.DadInt> results;
+            List<DadInt> results;
 
             try{
                  results = _clientService.TxSubmit(_clientName, _dadIntsToRead, _dadIntsToWrite);
@@ -38,7 +39,7 @@ namespace Client.src.commands
             }
 
             Console.WriteLine("Received from transaction:");
-            foreach (Common.DadInt dadInt in results){
+            foreach (DadInt dadInt in results){
                 Console.Write("DadInt received: <" + dadInt.Key + "> " + dadInt.Value);
             }
             

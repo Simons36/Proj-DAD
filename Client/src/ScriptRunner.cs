@@ -2,7 +2,8 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Client.src.commands;
 using Client.src.service;
-using Client.src.exceptions;
+using Common.exceptions;
+using Common.util;
 
 namespace Client.src
 {
@@ -50,16 +51,17 @@ namespace Client.src
 
             int timeToRun = _numberTimeSlots * _timeSlotDuration;
 
-            DateTime currTime = DateTime.Now;
-            TimeSpan timeDiff = _startingTime.ToTimeSpan() - currTime.TimeOfDay; // time diff between current time and starting time
+            int timeToWait = 0;
 
-            if(timeDiff.TotalMilliseconds < 0){//if starting time has already passed
-                throw new InvalidStartingTimeException("Starting time is invalid (already passed)");
+            try{
+                timeToWait = UtilMethods.getTimeUntilStart(_startingTime);
+            }catch(InvalidStartingTimeException e){
+                throw e;
             }
             
             //wait until starting time
-            Thread.Sleep(((int)timeDiff.TotalMilliseconds) );
-            Console.WriteLine("time diff " + timeDiff.ToString());
+            Thread.Sleep((timeToWait) );
+            Console.WriteLine("time diff " + timeToWait + " ms");
 
 
             Stopwatch stopwatch = new Stopwatch();
@@ -117,7 +119,7 @@ namespace Client.src
 
                         //writes part
 
-                        List<Common.DadInt> listDadIntsToWrite = new List<Common.DadInt>();
+                        List<Common.structs.DadInt> listDadIntsToWrite = new List<Common.structs.DadInt>();
 
                         string dadIntsToWrite = lineSplit[2].Remove(0, 1);
                         dadIntsToWrite = dadIntsToWrite.Remove(dadIntsToWrite.Length - 1, 1);
@@ -135,7 +137,7 @@ namespace Client.src
                         }
 
                         for(int i = 0; i < listParsedDadInts.Count; i += 2){
-                            Common.DadInt dadIntToAdd = new Common.DadInt(listParsedDadInts[i], int.Parse(listParsedDadInts[i + 1]));
+                            Common.structs.DadInt dadIntToAdd = new Common.structs.DadInt(listParsedDadInts[i], int.Parse(listParsedDadInts[i + 1]));
 
                             listDadIntsToWrite.Add(dadIntToAdd);
                         }

@@ -3,7 +3,7 @@ using Grpc.Net.Client;
 using Client.src.service;
 using Common;
 using Client.src;
-using Client.src.exceptions;
+using Common.exceptions;
 
 namespace Client
 {
