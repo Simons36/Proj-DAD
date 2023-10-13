@@ -1,4 +1,7 @@
-﻿using Grpc.Core;
+﻿using System.Data;
+using System.Data.Common;
+using Grpc.Core;
+using LeaseManager.src.paxos;
 using LeaseManager.src.service;
 
 namespace LeaseManager.src
@@ -12,7 +15,8 @@ namespace LeaseManager.src
                 duration = 0;
             string currLM = "";
             TimeOnly startingTime = new TimeOnly();
-            List<string> leaseManagerUrls = new List<string>();
+            Dictionary<string, int> leaseManagerNameToId = new Dictionary<string, int>();
+            Dictionary<string, string> leaseManagerNameToUrl = new Dictionary<string, string>();
 
             int crashingTimeSlot = -1;
 
@@ -46,17 +50,20 @@ namespace LeaseManager.src
                         startingTime = TimeOnly.Parse(args[i + 1]);
                         break;
 
-                    case "-nl":
-                        for (int k = i + 1; k < args.Length; k++)
+                    case "--lease-urls":
+                        for (int k = i + 1; k < args.Length; k += 2)
                         {
-                            string nextArg = args[k];
-                            if (nextArg.StartsWith("http://"))
+
+                            string leaseName = args[k];
+                            string leaseUrl = args[k + 1];
+                            if (isNotPrefix(leaseName))
                             {
-                                leaseManagerUrls.Add(nextArg);
+                                leaseManagerNameToUrl.Add(leaseName, leaseUrl);
+                                leaseManagerNameToId.Add(leaseName, leaseManagerNameToUrl.Count);
                             }
                             else
                             {
-                                // Break if the next argument does not start with "http://"
+                                // Break if the next argument is a prefix
                                 break;
                             }
                         }
@@ -88,23 +95,66 @@ namespace LeaseManager.src
             }
 
             
-            writeArguments(name, timeslotNumber, duration, startingTime, currLM, leaseManagerUrls, crashingTimeSlot, suspectedServers);
+            writeArguments(name, timeslotNumber, duration, startingTime, currLM, leaseManagerNameToUrl, crashingTimeSlot, suspectedServers);
 
-            // var server = new Server
-            // {
-            //     Services = { LeaseManagerService.BindService(new LeaseManagerServiceImpl(name, timeslotNumber, duration, startingTime, leaseManagerUrls)) },
-            //     Ports = { new ServerPort("localhost", int.Parse(currLM.Split(':')[2]), ServerCredentials.Insecure) }
-            // };
-            
-            //server.Start();
+            int id = 0;
 
-            Console.WriteLine("Lease Manager server listening on port " + currLM.Split(':')[2]);
+            //get the id of this lease manager (for paxos leader election)
+            foreach(string key in leaseManagerNameToUrl.Keys){
+                if(leaseManagerNameToUrl[key].Equals(currLM)){
+                    id = leaseManagerNameToId[key];
+                }
+            }
 
-            while (true);
+            if(id == 0){
+                throw new Exception("Something went wrong while getting the id of this lease manager");
+            }
+
+            //paxos state class
+            PaxosImplementation paxos = new PaxosImplementation(timeslotNumber, duration, startingTime, leaseManagerNameToId, crashingTimeSlot, suspectedServers, id);
+
+            //transaction manager communication
+            LeaseSolicitationServiceImpl leaseSolicitationService = new LeaseSolicitationServiceImpl(paxos);
+
+            //other lease managers communication (paxos)
+            PaxosInternalServiceServer paxosInternalServiceServer = new PaxosInternalServiceServer();
+
+            string hostname = currLM.Split(':')[1].Remove(0, 2);
+            int port = int.Parse(currLM.Split(':')[2]);
+
+            try{
+
+                var server = new Server
+                {
+                    Services = { LeaseSolicitationService.BindService(leaseSolicitationService),
+                                PaxosInternalService.BindService(paxosInternalServiceServer)},
+
+                    Ports = { new ServerPort(hostname, port,ServerCredentials.Insecure) }
+                };
+
+                server.Start();
+
+            }catch(IOException e){
+                
+                Console.WriteLine("Error while trying to start server: " + e.Message);
+            }
+
+
+            Console.WriteLine("Lease Manager server listening on port " + port);
+
+            try{
+                paxos.Start(); //start paxos algorithm
+            }catch(Exception e){
+                Console.WriteLine("Error while trying to start server: " + e.Message);
+            }
+
+
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
         }
 
         private static void writeArguments(string name, int timeslotNumber, int duration, TimeOnly startingTime, string currLM,
-                                    List<string> leaseManagerUrls, int crashingTimeSlot, Dictionary<string, List<int>> suspectedServers){
+                                    Dictionary<string, string> leaseManagerNameToUrl, int crashingTimeSlot, Dictionary<string, List<int>> suspectedServers){
             // Display the extracted values for verification
             Console.WriteLine("Received Arguments:");
             Console.WriteLine("Name: " + name);
@@ -116,10 +166,8 @@ namespace LeaseManager.src
             Console.WriteLine("This server url: " + currLM);
             Console.WriteLine("Lease Manager URLs:");
 
-
-            foreach (var url in leaseManagerUrls)
-            {
-                Console.WriteLine("  - " + url);
+            foreach(string key in leaseManagerNameToUrl.Keys){
+                Console.WriteLine("  - " + key + ": " + leaseManagerNameToUrl[key]);
             }
 
             Console.WriteLine();
@@ -145,5 +193,19 @@ namespace LeaseManager.src
 
             Console.WriteLine();
         }
+
+        private static bool isNotPrefix(string arg)
+        {
+            if (arg.Equals("-n")  || 
+                arg.Equals("-e")  || 
+                arg.Equals("-nr") || 
+                arg.Equals("-d")  || 
+                arg.Equals("-t")  || 
+                arg.Equals("-u")  ||
+                arg.Equals("-id") ) return false;
+            
+            return true;
+        }
+
     }
 }
