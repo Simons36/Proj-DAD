@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Grpc.Core;
-using TransactionManager.src.service.util;
 using TransactionManager.src.state;
+using Common.util;
 
 namespace TransactionManager.src.service
 {
@@ -23,19 +19,19 @@ namespace TransactionManager.src.service
 
             string clientId = request.Client;
             List<string> keysToBeRead = request.ReadDads.ToList();
-            List<DadInt> dadIntsToBeWritten = request.WriteDads.ToList();
+            List<ProtoDadInt> dadIntsToBeWritten = request.WriteDads.ToList();
 
-            List<Common.DadInt> newDadIntsToBeWritten = new List<Common.DadInt>();
+            List<Common.structs.DadInt> newDadIntsToBeWritten = new List<Common.structs.DadInt>();
 
-            foreach(DadInt protoDadInt in dadIntsToBeWritten){
-                newDadIntsToBeWritten.Add(DadIntParser.parseProtoDadInt(protoDadInt));
+            foreach(ProtoDadInt protoDadInt in dadIntsToBeWritten){
+                newDadIntsToBeWritten.Add(UtilMethods.parseProtoDadInt(protoDadInt));
             }
 
-            List<Common.DadInt> returnedDadInts = _state.TransactionHandler(clientId, keysToBeRead, newDadIntsToBeWritten);
+            List<Common.structs.DadInt> returnedDadInts = _state.TransactionHandler(clientId, keysToBeRead, newDadIntsToBeWritten);
 
-            List<DadInt> newReturnedDadInts = new List<DadInt>();
-            foreach(Common.DadInt commonDadInt in returnedDadInts){
-                newReturnedDadInts.Add(DadIntParser.parseCommonDadInt(commonDadInt));
+            List<ProtoDadInt> newReturnedDadInts = new List<ProtoDadInt>();
+            foreach(Common.structs.DadInt commonDadInt in returnedDadInts){
+                newReturnedDadInts.Add(UtilMethods.parseCommonDadInt(commonDadInt));
             }
 
             return Task.FromResult(new TxSubmitReply { DadInts = { newReturnedDadInts } });

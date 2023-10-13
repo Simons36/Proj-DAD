@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Common.structs;
 
 namespace TransactionManager.src.state
 {
@@ -13,10 +14,10 @@ namespace TransactionManager.src.state
 
         }
 
-        public List<Common.DadInt> TransactionHandler(string clientId, List<string> keysToBeRead, List<Common.DadInt> dadIntsToBeWritten){
-            List<Common.DadInt> returnedDadInts = new List<Common.DadInt>();
+        public List<DadInt> TransactionHandler(string clientId, List<string> keysToBeRead, List<DadInt> dadIntsToBeWritten){
+            List<DadInt> returnedDadInts = new List<DadInt>();
 
-            Common.DadInt tempDadInt = new Common.DadInt("ola", 1);
+            DadInt tempDadInt = new DadInt("ola", 1);
             returnedDadInts.Add(tempDadInt);
 
             return returnedDadInts;

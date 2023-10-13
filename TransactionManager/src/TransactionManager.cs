@@ -7,6 +7,7 @@ using TransactionManager.src.service;
 using TransactionManager.src;
 using System.Security.AccessControl;
 using TransactionManager.src.state;
+using Common.structs;
 
 namespace TransactionManager
 {
@@ -18,6 +19,7 @@ namespace TransactionManager
             int timeslotNumber = 0, duration = 0, id = 0;
             TimeOnly startingTime = new TimeOnly();
             List<string> tMsUrls = new List<string>();
+            List<string> leaseManagersUrls = new List<string>();
 
             Console.WriteLine("Starting DADKTV transaction manager process. Received arguments:");
 
@@ -56,6 +58,12 @@ namespace TransactionManager
                         }
                         break;
 
+                    case "--lease-urls":
+                        for(int k = i + 1; (k < args.Length) && (isNotPrefix(args[k])); k++){
+                            leaseManagersUrls.Add(args[k]);
+                        }
+                        break;
+
                     default:
                         break;
                 }
@@ -64,8 +72,17 @@ namespace TransactionManager
             Console.WriteLine("");
 
             //TransactionManagerServiceImpl transactionService = new TransactionManagerServiceImpl(thisUrl, tMsUrls);
+            LeaseManagerServiceImpl leaseService = new LeaseManagerServiceImpl(leaseManagersUrls);
             TransactionManagerState state = new TransactionManagerState();
             ClientServiceImpl clientService = new ClientServiceImpl(state);
+            
+            //TODO: remove, this just for test
+            DadInt dadInt = new DadInt("ola", 1);
+            List<DadInt> dadIntList = new List<DadInt>();
+            dadIntList.Add(dadInt);
+            Thread.Sleep(5000);
+            leaseService.LeaseSolicitation(new Common.structs.Lease(name, dadIntList));
+            //end
 
             startServer(thisUrl, clientService);
 
@@ -76,7 +93,13 @@ namespace TransactionManager
 
         private static bool isNotPrefix(string arg)
         {
-            if (arg.Equals("-n") || arg.Equals("-e") || arg.Equals("-nr") || arg.Equals("-d") || arg.Equals("-t") || arg.Equals("-u"))
+            if (arg.Equals("-n")  || 
+                arg.Equals("-e")  ||
+                arg.Equals("-nr") || 
+                arg.Equals("-d")  || 
+                arg.Equals("-t")  || 
+                arg.Equals("-u")  ||
+                arg.Equals("--lease-urls"))
             {
                 return false;
             }
@@ -88,7 +111,7 @@ namespace TransactionManager
             string[] splitString = thisUrl.Split(":");
 
             string hostname = splitString[1];
-            hostname = hostname.Remove(0, 2);
+            hostname = hostname.Remove(0, 2); //remove the // from the hostname
 
             int port = int.Parse(splitString[2]);
 
