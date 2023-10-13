@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Grpc.Net.Client;
-using Client.src.service.util;
+using Common.structs;
 
 namespace Client.src.service
 {
@@ -40,19 +36,19 @@ namespace Client.src.service
         }
 
 
-        public List<Common.DadInt> TxSubmit(string client, List<string> keysToRead, List<Common.DadInt> dadIntsToWrite){
-            List<DadInt> parsedDadInts = new List<DadInt>();
+        public List<DadInt> TxSubmit(string client, List<string> keysToRead, List<DadInt> dadIntsToWrite){
+            List<ProtoDadInt> parsedDadInts = new List<ProtoDadInt>();
 
-            foreach(Common.DadInt unparsedDadInt in dadIntsToWrite){
-                parsedDadInts.Add(new DadInt{ Key = unparsedDadInt.Key, Value = unparsedDadInt.Value});
+            foreach(DadInt unparsedDadInt in dadIntsToWrite){
+                parsedDadInts.Add(new ProtoDadInt{ Key = unparsedDadInt.Key, Value = unparsedDadInt.Value});
             }
 
-            List<DadInt> receivedList = _stub.TxSubmit(new TxSubmitRequest { Client = client, ReadDads = { keysToRead }, WriteDads = { parsedDadInts } })
+            List<ProtoDadInt> receivedList = _stub.TxSubmit(new TxSubmitRequest { Client = client, ReadDads = { keysToRead }, WriteDads = { parsedDadInts } })
                                              .DadInts.ToList();
 
-            List<Common.DadInt> commonDadInts = new List<Common.DadInt>();
-            foreach(DadInt dadInt in receivedList){
-                commonDadInts.Add(new Common.DadInt{ Key = dadInt.Key, Value = dadInt.Value});
+            List<DadInt> commonDadInts = new List<DadInt>();
+            foreach(ProtoDadInt dadInt in receivedList){
+                commonDadInts.Add(new DadInt{ Key = dadInt.Key, Value = dadInt.Value});
             }
 
             return commonDadInts;
