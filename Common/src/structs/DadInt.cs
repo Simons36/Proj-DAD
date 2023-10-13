@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Common
+namespace Common.structs
 {
     public struct DadInt
     {
@@ -25,6 +25,10 @@ namespace Common
         {
             get { return _value; }
             set { _value = value; }
+        }
+
+        public override string ToString(){
+            return "<" + _key + "> " + _value.ToString();
         }
     }
 }
