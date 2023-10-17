@@ -111,13 +111,16 @@ namespace LeaseManager.src
             }
 
             //paxos state class
-            PaxosImplementation paxos = new PaxosImplementation(timeslotNumber, duration, startingTime, leaseManagerNameToId, crashingTimeSlot, suspectedServers, id);
+            PaxosInternalServiceClient paxosInternalServiceClient = new PaxosInternalServiceClient(name, leaseManagerNameToUrl, (leaseManagerNameToUrl.Count / 2) + 1);
+            PaxosImplementation paxos = new PaxosImplementation(timeslotNumber, duration, startingTime, leaseManagerNameToId, 
+                                                                crashingTimeSlot, suspectedServers, id, paxosInternalServiceClient);
 
             //transaction manager communication
             LeaseSolicitationServiceImpl leaseSolicitationService = new LeaseSolicitationServiceImpl(paxos);
+            paxos.AddLeaseService(leaseSolicitationService);
 
             //other lease managers communication (paxos)
-            PaxosInternalServiceServer paxosInternalServiceServer = new PaxosInternalServiceServer();
+            PaxosInternalServiceServer paxosInternalServiceServer = new PaxosInternalServiceServer(paxos);
 
             string hostname = currLM.Split(':')[1].Remove(0, 2);
             int port = int.Parse(currLM.Split(':')[2]);

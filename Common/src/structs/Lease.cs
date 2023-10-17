@@ -36,5 +36,16 @@ namespace Common.structs
             get { return _dadIntsKeys; }
             set { _dadIntsKeys = value; }
         }
+
+        public override string ToString()
+        {
+            string s = "Attributed Transaction Manager: " + _transactionManagerName + "\n";
+
+            foreach(string dadIntKey in _dadIntsKeys){
+                s += "DadInt key: " + dadIntKey + "\n";
+            }
+
+            return s;
+        }
     }
 }

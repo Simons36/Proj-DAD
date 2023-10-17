@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-//package common.proto;
-
 import "ProtoStructs.proto";
 
 service ClientService {

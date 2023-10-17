@@ -1,6 +1,7 @@
 using LeaseManager.src.paxos;
 using Grpc.Core;
-
+using Common.structs;
+using Common.util;
 
 namespace LeaseManager.src.service {
 
@@ -14,10 +15,21 @@ namespace LeaseManager.src.service {
             _paxos = paxos;
         }
 
-        public override Task<LeaseReply> LeaseSolicitation(LeaseRequest request, ServerCallContext context)
+        public override async Task<LeaseReply> LeaseSolicitation(LeaseRequest request, ServerCallContext context)
         {
-            _paxos.TMRequestHandler();
-            return Task.FromResult(new LeaseReply());
+            Lease requestedLease = UtilMethods.parseProtoLeaseToLease(request.RequestedLease);
+
+            List<Lease> receivedLeases = await _paxos.TMRequestHandler(requestedLease);
+
+            Console.WriteLine("feuiwbfiuebfiuewb");
+
+            //create lease reply from received leases
+            LeaseReply reply = new LeaseReply();
+            foreach(Lease lease in receivedLeases){
+                reply.Leases.Add(UtilMethods.parseLeaseToProtoLease(lease));
+            }
+
+            return reply;
         }
     }
 }

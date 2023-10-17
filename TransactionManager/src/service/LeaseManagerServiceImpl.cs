@@ -73,14 +73,14 @@ namespace TransactionManager.src.service
             List<Lease> parsedResponse = new List<Lease>();
 
             //get the first non-empty response (not empty responses are the ones from the learners)
-            foreach(LeaseReply reply in responseList){
-                if(reply.Leases.Count > 0){
-                    foreach(ProtoLease protoLeaseInside in reply.Leases){
-                        parsedResponse.Add(UtilMethods.parseProtoLeaseToLease(protoLeaseInside));
-                    }
-                    break;
-                }
-            }
+            // foreach(LeaseReply reply in responseList){
+            //     if(reply.Leases.Count > 0){
+            //         foreach(ProtoLease protoLeaseInside in reply.Leases){
+            //             parsedResponse.Add(UtilMethods.parseProtoLeaseToLease(protoLeaseInside));
+            //         }
+            //         break;
+            //     }
+            // }
 
             return parsedResponse;
         }
