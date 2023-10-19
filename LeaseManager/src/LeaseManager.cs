@@ -117,7 +117,6 @@ namespace LeaseManager.src
 
             //transaction manager communication
             LeaseSolicitationServiceImpl leaseSolicitationService = new LeaseSolicitationServiceImpl(paxos);
-            paxos.AddLeaseService(leaseSolicitationService);
 
             //other lease managers communication (paxos)
             PaxosInternalServiceServer paxosInternalServiceServer = new PaxosInternalServiceServer(paxos);

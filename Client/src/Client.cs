@@ -82,15 +82,15 @@ namespace Client
             Console.WriteLine();
 
             ClientServiceImpl clientService = new ClientServiceImpl(tMsUrls, id);
-            ScriptRunner scriptRunner = new ScriptRunner(name, /*script*/ "DADTKV_client_script_sample.txt", timeslotNumber, duration, startingTime, clientService);
+            ScriptRunner scriptRunner = new ScriptRunner(name, script, timeslotNumber, duration, startingTime, clientService);
 
             try{
                 scriptRunner.RunScript();
             }catch(InvalidStartingTimeException e){
                 Console.WriteLine(e.Message);
-            }catch(Exception e){
-                Console.WriteLine(e.Message);
-            }
+            }//catch(Exception e){
+              //  Console.WriteLine(e.Message);
+            //}
 
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();

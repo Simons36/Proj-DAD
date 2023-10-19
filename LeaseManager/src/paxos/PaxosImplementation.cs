@@ -33,8 +33,6 @@ namespace LeaseManager.src.paxos
 
         private bool _isCurrentLeader;
 
-        private LeaseSolicitationServiceImpl? _leaseSolicitationService;
-
         private Dictionary<int, PaxosInstance> _activePaxosInstances;
 
         private Dictionary<int, TaskCompletionSource<List<Lease>>> _epochResult;
@@ -78,8 +76,7 @@ namespace LeaseManager.src.paxos
                     timeToWait = UtilMethods.getTimeUntilStart(epochStart);
                 
                     Thread.Sleep(timeToWait);
-                    Console.WriteLine("f");
-
+                    
                     Task advanceEpoch = new Task(() => AdvanceEpoch());
                     advanceEpoch.Start();
 
@@ -92,7 +89,9 @@ namespace LeaseManager.src.paxos
            
         }
 
-        public async Task<List<Lease>> TMRequestHandler(Lease requestedLease){
+        public int RegisterLeaseRequest(Lease requestedLease){
+            int thisRequestEpoch = _currentEpoch;
+
             Console.WriteLine("Received lease request:");
             Console.WriteLine(requestedLease.ToString());
             Console.WriteLine("Adding to current epoch received leases");
@@ -102,13 +101,25 @@ namespace LeaseManager.src.paxos
             }
 
             lock(this){
-                if(!_epochResult.ContainsKey(_currentEpoch)){
-                    _epochResult.Add(_currentEpoch, new TaskCompletionSource<List<Lease>>());
+
+                //TODO: remove this
+                if(thisRequestEpoch == -1){
+                    thisRequestEpoch = 0;
+                }
+
+                if(!_epochResult.ContainsKey(thisRequestEpoch )){
+                    _epochResult.Add(thisRequestEpoch , new TaskCompletionSource<List<Lease>>());
+                    Console.WriteLine("Added task completion source for epoch: " + thisRequestEpoch);
                 }
             }
 
-            return await _epochResult[_currentEpoch].Task;
+            return thisRequestEpoch;
 
+        }
+
+        public async Task<List<Lease>> GetRequestReult(int epoch){
+    
+            return await _epochResult[epoch].Task;
         }
 
         public async void AdvanceEpoch(){
@@ -130,7 +141,10 @@ namespace LeaseManager.src.paxos
         }
 
         public async void OrderPreviousEpochRequests(List<Lease> previousEpochRequests, int epoch){
+            
+
             Console.WriteLine("Ordering previous epoch requests");
+            
 
             bool isThisServerLeader;
 
@@ -233,14 +247,6 @@ namespace LeaseManager.src.paxos
                 _epochResult[paxosInstance.Epoch].SetResult(new List<Lease>());
             }
         }
-
-        public void AddLeaseService(LeaseSolicitationServiceImpl leaseSolicitationService){
-            _leaseSolicitationService = leaseSolicitationService;
-        }
-
-
-        
-
 
     }
 }

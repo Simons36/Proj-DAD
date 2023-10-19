@@ -19,15 +19,16 @@ namespace LeaseManager.src.service {
         {
             Lease requestedLease = UtilMethods.parseProtoLeaseToLease(request.RequestedLease);
 
-            List<Lease> receivedLeases = await _paxos.TMRequestHandler(requestedLease);
+            int currentEpoch = _paxos.RegisterLeaseRequest(requestedLease);
 
-            Console.WriteLine("feuiwbfiuebfiuewb");
+            List<Lease> receivedLeases = await _paxos.GetRequestReult(currentEpoch);
 
             //create lease reply from received leases
             LeaseReply reply = new LeaseReply();
             foreach(Lease lease in receivedLeases){
                 reply.Leases.Add(UtilMethods.parseLeaseToProtoLease(lease));
             }
+            reply.Epoch = currentEpoch;
 
             return reply;
         }

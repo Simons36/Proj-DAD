@@ -1,0 +1,3 @@
+T () (<"simao",10>,<"miguel",20>)
+T ("simao","miguel") ()
+W 15000

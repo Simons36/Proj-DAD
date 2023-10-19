@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Client.src.service;
 using Common.structs;
+using Microsoft.VisualBasic;
 
 namespace Client.src.commands
 {
@@ -17,33 +18,53 @@ namespace Client.src.commands
 
         private List<DadInt> _dadIntsToWrite;
 
-        public TransactionCommand(ClientServiceImpl clientService, string clientName, List<string> dadIntsToRead, List<DadInt> dadIntsToWrite) : base()
+        private int _id;
+
+        private int _runNumber;
+
+        public TransactionCommand(ClientServiceImpl clientService, string clientName, List<string> dadIntsToRead, List<DadInt> dadIntsToWrite, int id) : base()
         {
             _clientService = clientService;
             _clientName = clientName;
             _dadIntsToRead = dadIntsToRead;
             _dadIntsToWrite = dadIntsToWrite;
+            _id = id;
+            _runNumber = 1;
         }
 
-        public override void Execute()
+        public override async void Execute()
         {
-            Console.WriteLine("Executing transaction command");
+            Console.WriteLine("Executing transaction command " + _id + "." + _runNumber);
+
             List<DadInt> results;
 
             try{
-                 results = _clientService.TxSubmit(_clientName, _dadIntsToRead, _dadIntsToWrite);
+                 results = await _clientService.TxSubmit(_clientName, _dadIntsToRead, _dadIntsToWrite);
             }
             catch (Exception e){
                 Console.WriteLine(e);
                 throw;
             }
 
-            Console.WriteLine("Received from transaction:");
+            Console.WriteLine("Received from transaction:" + _id + "." + _runNumber);
             foreach (DadInt dadInt in results){
-                Console.Write("DadInt received: <" + dadInt.Key + "> " + dadInt.Value);
+                Console.WriteLine("DadInt received: " + dadInt.ToString());
+            }
+
+            List<string> keysReceived = new List<string>();
+            foreach(DadInt dadInt in results){
+                keysReceived.Add(dadInt.Key);
+            }
+
+            foreach(string key in _dadIntsToRead){
+                if(!keysReceived.Contains(key)){
+                    Console.WriteLine("DadInt with key " + key + " is null");
+                }
             }
             
             Console.WriteLine();
+
+            _runNumber++;
         }
     }
 }

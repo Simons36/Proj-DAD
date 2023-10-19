@@ -36,14 +36,14 @@ namespace Client.src.service
         }
 
 
-        public List<DadInt> TxSubmit(string client, List<string> keysToRead, List<DadInt> dadIntsToWrite){
+        public async Task<List<DadInt>> TxSubmit(string client, List<string> keysToRead, List<DadInt> dadIntsToWrite){
             List<ProtoDadInt> parsedDadInts = new List<ProtoDadInt>();
 
             foreach(DadInt unparsedDadInt in dadIntsToWrite){
                 parsedDadInts.Add(new ProtoDadInt{ Key = unparsedDadInt.Key, Value = unparsedDadInt.Value});
             }
 
-            List<ProtoDadInt> receivedList = _stub.TxSubmit(new TxSubmitRequest { Client = client, ReadDads = { keysToRead }, WriteDads = { parsedDadInts } })
+            List<ProtoDadInt> receivedList = (await _stub.TxSubmitAsync(new TxSubmitRequest { Client = client, ReadDads = { keysToRead }, WriteDads = { parsedDadInts } }))
                                              .DadInts.ToList();
 
             List<DadInt> commonDadInts = new List<DadInt>();

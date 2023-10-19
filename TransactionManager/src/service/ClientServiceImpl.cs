@@ -1,6 +1,7 @@
 using Grpc.Core;
 using TransactionManager.src.state;
 using Common.util;
+using Common.structs;
 
 namespace TransactionManager.src.service
 {
@@ -14,27 +15,27 @@ namespace TransactionManager.src.service
             _state = state;
         }
 
-        public override Task<TxSubmitReply> TxSubmit(TxSubmitRequest request, ServerCallContext context){
+        public override async Task<TxSubmitReply> TxSubmit(TxSubmitRequest request, ServerCallContext context){
             Console.WriteLine("Received TxSubmit request from client " + request.Client);
 
             string clientId = request.Client;
             List<string> keysToBeRead = request.ReadDads.ToList();
             List<ProtoDadInt> dadIntsToBeWritten = request.WriteDads.ToList();
 
-            List<Common.structs.DadInt> newDadIntsToBeWritten = new List<Common.structs.DadInt>();
+            List<DadInt> newDadIntsToBeWritten = new List<DadInt>();
 
             foreach(ProtoDadInt protoDadInt in dadIntsToBeWritten){
                 newDadIntsToBeWritten.Add(UtilMethods.parseProtoDadInt(protoDadInt));
             }
 
-            List<Common.structs.DadInt> returnedDadInts = _state.TransactionHandler(clientId, keysToBeRead, newDadIntsToBeWritten);
-
+            List<DadInt> returnedDadInts = await _state.TransactionHandler(clientId, keysToBeRead, newDadIntsToBeWritten);
+            
             List<ProtoDadInt> newReturnedDadInts = new List<ProtoDadInt>();
-            foreach(Common.structs.DadInt commonDadInt in returnedDadInts){
+            foreach(DadInt commonDadInt in returnedDadInts){
                 newReturnedDadInts.Add(UtilMethods.parseCommonDadInt(commonDadInt));
             }
 
-            return Task.FromResult(new TxSubmitReply { DadInts = { newReturnedDadInts } });
+            return new TxSubmitReply { DadInts = { newReturnedDadInts } };
         }
     }
 }

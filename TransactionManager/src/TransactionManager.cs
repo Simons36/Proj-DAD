@@ -21,13 +21,11 @@ namespace TransactionManager
             List<string> tMsUrls = new List<string>();
             List<string> leaseManagersUrls = new List<string>();
 
-            Console.WriteLine("Starting DADKTV transaction manager process. Received arguments:");
+            Console.WriteLine("Starting DADKTV transaction manager process.\nReceived arguments:\n");
 
             for (int i = 0; i < args.Length; i++)
             {
                 string arg = args[i];
-
-                Console.Write(arg + " ");
 
                 switch (arg)
                 {
@@ -69,24 +67,16 @@ namespace TransactionManager
                 }
             }
 
-            Console.WriteLine("");
+            WriteArguments(name, thisUrl, startingTime, tMsUrls, leaseManagersUrls);
 
             //TransactionManagerServiceImpl transactionService = new TransactionManagerServiceImpl(thisUrl, tMsUrls);
             LeaseManagerServiceImpl leaseService = new LeaseManagerServiceImpl(leaseManagersUrls);
-            TransactionManagerState state = new TransactionManagerState();
+            TransactionManagerState state = new TransactionManagerState(leaseService, name);
             ClientServiceImpl clientService = new ClientServiceImpl(state);
-            
-            //TODO: remove, this just for test
-            DadInt dadInt = new DadInt("ola", 1);
-            List<DadInt> dadIntList = new List<DadInt>();
-            dadIntList.Add(dadInt);
-            Thread.Sleep(5000);
-            leaseService.LeaseSolicitation(new Common.structs.Lease(name, dadIntList));
-            //end
 
             startServer(thisUrl, clientService);
 
-
+            Console.WriteLine("Press any key to stop the server...");
             Console.ReadKey();
 
         }
@@ -115,9 +105,6 @@ namespace TransactionManager
 
             int port = int.Parse(splitString[2]);
 
-            Console.WriteLine("Starting server on " + hostname);
-            Console.WriteLine("Starting server on " + port);
-
             try{
                 Server server = new Server
                 {
@@ -132,6 +119,22 @@ namespace TransactionManager
 
             Console.WriteLine("Server listening on " + hostname + ":" + port);
             while (true);
+        }
+
+        private static void WriteArguments(string name, string thisUrl, TimeOnly startingTime, List<string> tMsUrls, List<string> leaseManagersUrls){
+            Console.WriteLine("Name: " + name);
+            Console.WriteLine("This server's url: " + thisUrl);
+            Console.WriteLine();
+            Console.WriteLine("Starting time: " + startingTime);
+            Console.WriteLine();
+            Console.WriteLine("Transaction Manager's urls: ");
+            foreach (string url in tMsUrls)
+                Console.WriteLine("  - " + url);
+            Console.WriteLine();
+            Console.WriteLine("Lease Manager's urls: ");
+            foreach(string url in leaseManagersUrls)
+                Console.WriteLine("  - " + url);
+            Console.WriteLine();
         }
     }
 }

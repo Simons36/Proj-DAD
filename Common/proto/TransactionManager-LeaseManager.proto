@@ -11,5 +11,6 @@ message LeaseRequest{
 }
 
 message LeaseReply{
+    int32 epoch = 1;
     repeated ProtoLease leases = 2;
 }
