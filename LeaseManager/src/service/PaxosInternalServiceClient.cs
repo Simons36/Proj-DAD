@@ -78,8 +78,12 @@ namespace LeaseManager.src.service
                     PaxosMessageStruct paxosMessageStruct = PaxosMessagesParser.ParsePromiseMessageToPaxosMessageStruct(promiseMessage);
                     
                     returnList.Add(paxosMessageStruct);
-                }catch(ReadTimestampGreaterThanWriteTimestampRpcException){
-                    Console.WriteLine("One lease manager had read timestamp higher than write timestamp, ignoring...");
+                }catch(RpcException e){
+                    if(e.StatusCode == StatusCode.FailedPrecondition){
+                        Console.WriteLine("One lease manager had read timestamp higher than write timestamp, ignoring...");
+                    }else{
+                        Console.WriteLine("An error ocurred in one of the requests to the lease managers, probably crashed");
+                    }
                 }
 
 
@@ -128,6 +132,8 @@ namespace LeaseManager.src.service
                 }catch(RpcException e){
                     if(e.StatusCode == StatusCode.FailedPrecondition){
                         Console.WriteLine("One lease manager had read timestamp higher than write timestamp, ignoring...");
+                    }else{
+                        Console.WriteLine("An error ocurred in one of the requests to the lease managers, probably crashed");
                     }
                 }
             }

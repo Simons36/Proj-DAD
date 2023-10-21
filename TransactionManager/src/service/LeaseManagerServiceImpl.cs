@@ -2,6 +2,7 @@ using System.Collections;
 using System.Net;
 using Common.structs;
 using Common.util;
+using Grpc.Core;
 using Grpc.Net.Client;
 
 namespace TransactionManager.src.service
@@ -38,35 +39,27 @@ namespace TransactionManager.src.service
 
             request.RequestedLease = protoLease;
 
-            List<Task<LeaseReply>> tasks = new List<Task<LeaseReply>>();
+            Dictionary<LeaseSolicitationService.LeaseSolicitationServiceClient, Task<LeaseReply>> tasksPerLeaseManager = 
+            new Dictionary<LeaseSolicitationService.LeaseSolicitationServiceClient, Task<LeaseReply>>();
 
-            List<LeaseSolicitationService.LeaseSolicitationServiceClient> clientsToRemove = new List<LeaseSolicitationService.LeaseSolicitationServiceClient>();
             foreach(LeaseSolicitationService.LeaseSolicitationServiceClient client in _leaseManagersClients){
-                try{
-                    tasks.Add(client.LeaseSolicitationAsync(request).ResponseAsync);
-
-                }catch(IOException e){
-
-                    Console.WriteLine("Could not connect to lease manager at " + client + ": " + e.Message);
-                    clientsToRemove.Add(client);
-                    continue;
-                }
-                //TODO: imlement rest
+                tasksPerLeaseManager.Add(client, client.LeaseSolicitationAsync(request).ResponseAsync);
             }
-
-            //remove unresponsive lease managers
-            foreach(LeaseSolicitationService.LeaseSolicitationServiceClient client in clientsToRemove){
-                _leaseManagersClients.Remove(client);
-            }
-
-
 
             List<LeaseReply> responseList = new List<LeaseReply>();
-            
-            try{//wait for all responses
-                responseList = (await Task.WhenAll(tasks)).ToList();
-            }catch(Exception e){
-                Console.WriteLine("Error: " + e.Message);
+            List<LeaseSolicitationService.LeaseSolicitationServiceClient> clientsToRemove = new List<LeaseSolicitationService.LeaseSolicitationServiceClient>();
+
+            foreach(LeaseSolicitationService.LeaseSolicitationServiceClient key in tasksPerLeaseManager.Keys){
+                try{
+                    responseList.Add(await tasksPerLeaseManager[key]);
+                }catch(RpcException){
+                    Console.WriteLine("An error ocurred in one of the requests to the lease managers, removing it from further communications");
+                    clientsToRemove.Add(key);
+                }
+            }
+
+            foreach(LeaseSolicitationService.LeaseSolicitationServiceClient client in clientsToRemove){
+                _leaseManagersClients.Remove(client);
             }
 
 
@@ -82,7 +75,7 @@ namespace TransactionManager.src.service
             //     }
             // }
 
-
+            //TODO: implement parsedResponse
             return parsedResponse;
         }
         

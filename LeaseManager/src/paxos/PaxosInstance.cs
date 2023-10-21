@@ -26,7 +26,8 @@ namespace LeaseManager.src.paxos
 
         private PaxosInternalServiceClient _paxosClient;
 
-        public PaxosInstance(int id, int epoch, bool isLeaderCurrentEpoch, bool wasLeaderPreviousEpoch, List<Lease> proposedValue, PaxosInternalServiceClient paxosClient){
+        public PaxosInstance(int id, int epoch, bool isLeaderCurrentEpoch, bool wasLeaderPreviousEpoch, 
+                                List<Lease> proposedValue, PaxosInternalServiceClient paxosClient){
             _id = id;
             _epoch = epoch;
             _isLeaderCurrentEpoch = isLeaderCurrentEpoch;
@@ -77,7 +78,7 @@ namespace LeaseManager.src.paxos
 
                     newLease.AssignedTransactionManager = attributedTransactionManager;
                     foreach(string dadIntKey in receivedLease.DadIntsKeys){
-                        if(newLease.DadIntsKeys.Contains(dadIntKey)){
+                        if(!newLease.DadIntsKeys.Contains(dadIntKey)){
                             newLease.addDadInt(dadIntKey);
                         }
                     }
@@ -88,15 +89,15 @@ namespace LeaseManager.src.paxos
             }
         }
 
-        public async void StartInstance(){
+        public void StartInstance(){
 
-            if(_isLeaderCurrentEpoch && _epoch != 0 && !_wasLeaderPreviousEpoch){ //in first epoch promise fase not needed
+            int sentPrepareTimestamp = _writeTimestamp +_id;
+            if(_isLeaderCurrentEpoch && _epoch != 1 && !_wasLeaderPreviousEpoch){ //in first epoch promise fase not needed
 
-                PaxosMessageStruct prepareMessage = new PaxosMessageStruct(_writeTimestamp + _id, _epoch);
+                PaxosMessageStruct prepareMessage = new PaxosMessageStruct(sentPrepareTimestamp, _epoch);
+                
 
-                _writeTimestamp = _writeTimestamp + _id;
-
-                List<PaxosMessageStruct> receivedPromises = await Task.Run(() =>{return _paxosClient.broadcastPrepareMessage(prepareMessage);});
+                List<PaxosMessageStruct> receivedPromises = Task.Run(() =>{return _paxosClient.broadcastPrepareMessage(prepareMessage);}).Result;
 
 
                 
@@ -128,9 +129,14 @@ namespace LeaseManager.src.paxos
 
                     }
 
+
                     
                 }
 
+            }
+
+            if(sentPrepareTimestamp > _writeTimestamp){
+                _writeTimestamp = sentPrepareTimestamp;
             }
 
             if(_isLeaderCurrentEpoch){
@@ -149,10 +155,15 @@ namespace LeaseManager.src.paxos
 
                 PaxosMessageStruct acceptMessage = new PaxosMessageStruct(_writeTimestamp, _proposedValue, _epoch);
 
-                List<PaxosMessageStruct> receivedAccepted = await Task.Run(() =>{return _paxosClient.broadcastAcceptMessage(acceptMessage);});
+                List<PaxosMessageStruct> receivedAccepted = Task.Run(() =>{return _paxosClient.broadcastAcceptMessage(acceptMessage);}).Result;
 
                 Console.WriteLine("-OP" + _epoch + "-Value has been agreed upon");
 
+            }else{
+                //wait for accept fase to complete
+                lock(this){
+                    Monitor.Wait(this);
+                }
             }
 
             Console.WriteLine("---------------- EPOCH NR: " + _epoch + " | ORDERING COMPLETE -----------------");
@@ -185,9 +196,11 @@ namespace LeaseManager.src.paxos
                     _writeTimestamp = paxosMessageStruct.WriteTimestamp;
 
                     _proposedValue = paxosMessageStruct.Leases;
+                    Monitor.PulseAll(this);
                     return paxosMessageStruct;
                 }
             }
+
 
             throw new ReadTimestampGreaterThanWriteTimestampException();
 

@@ -124,9 +124,11 @@ namespace LeaseManager.src
             string hostname = currLM.Split(':')[1].Remove(0, 2);
             int port = int.Parse(currLM.Split(':')[2]);
 
+            Server server;
+
             try{
 
-                var server = new Server
+                server = new Server
                 {
                     Services = { LeaseSolicitationService.BindService(leaseSolicitationService),
                                 PaxosInternalService.BindService(paxosInternalServiceServer)},
@@ -139,6 +141,9 @@ namespace LeaseManager.src
             }catch(IOException e){
                 
                 Console.WriteLine("Error while trying to start server: " + e.Message);
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey();
+                return;
             }
 
             Console.WriteLine();
@@ -150,6 +155,10 @@ namespace LeaseManager.src
             }catch(Exception e){
                 Console.WriteLine("Error while trying to start server: " + e.Message);
             }
+
+            Console.WriteLine("Shutting down server...");
+            server.KillAsync().Wait();
+            Console.WriteLine("Server shut down.");
 
 
             Console.WriteLine("Press any key to exit...");

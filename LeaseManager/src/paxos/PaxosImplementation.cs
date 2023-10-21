@@ -72,7 +72,7 @@ namespace LeaseManager.src.paxos
             Console.WriteLine("-OPX- -> Corresponds to an operation of ordering phase of epoch X");
             Console.WriteLine("----------------------");
 
-            _currentEpoch = -1;
+            _currentEpoch = 0;
 
             int timeToWait = 0;
 
@@ -83,6 +83,10 @@ namespace LeaseManager.src.paxos
                 
                     Thread.Sleep(timeToWait);
                     
+                    if(_currentEpoch == _crashingTimeSlot - 1){
+                        Console.WriteLine("Crashing at epoch " + _currentEpoch + 1);
+                        return;
+                    }
                     Task advanceEpoch = new Task(() => AdvanceEpoch());
                     advanceEpoch.Start();
 
@@ -127,8 +131,10 @@ namespace LeaseManager.src.paxos
 
         public async void AdvanceEpoch(){
             _currentEpoch++;
+            Console.WriteLine("---------------- EPOCH NR: " + _currentEpoch + " | LISTENING PHASE STARTED -----------------");
+            Console.WriteLine();
             
-            if(_currentEpoch != 0){
+            if(_currentEpoch != 1){
                 int previousEpoch = _currentEpoch - 1;
                 
                 Console.WriteLine("---------------- EPOCH NR: " + previousEpoch + " | ORDERING PHASE STARTED -----------------");
@@ -146,18 +152,16 @@ namespace LeaseManager.src.paxos
                 await orderRequests;
                 
             }
-            Console.WriteLine("---------------- EPOCH NR: " + _currentEpoch + " | LISTENING PHASE STARTED -----------------");
-            Console.WriteLine();
 
         }
 
-        public async void OrderPreviousEpochRequests(List<Lease> previousEpochRequests, int epoch){
+        public void OrderPreviousEpochRequests(List<Lease> previousEpochRequests, int epoch){
             
 
             Console.WriteLine("-OP" + epoch + "- Ordering epoch " + epoch + " requests");
             
 
-            bool isThisServerLeader;
+            bool isThisServerLeader = false;
 
             if(!_isCurrentLeader){
                 isThisServerLeader = ThisServerLeader(epoch);
@@ -171,9 +175,12 @@ namespace LeaseManager.src.paxos
             Task paxosTask = new Task(() => paxosInstance.StartInstance());
             paxosTask.Start();
 
+            //set for next epochs
+            _isCurrentLeader = isThisServerLeader;
+
             _activePaxosInstances.Add(epoch, paxosInstance);
             
-            await paxosTask;
+            paxosTask.Wait();
 
             CheckIfNeededToSendTransactionMangers(paxosInstance);
 
@@ -258,20 +265,27 @@ namespace LeaseManager.src.paxos
             Console.Write("-OP" + paxosInstance.Epoch + "- Checking if this server needs to send transaction managers the result of epoch " + paxosInstance.Epoch + ":");
 
             if(paxosInstance.IsLeaderCurrentEpoch){
-                Console.WriteLine("yes");
+                Console.WriteLine(" Yes");
                 _epochResult[paxosInstance.Epoch].SetResult(paxosInstance.ProposedValue);
 
-                Console.WriteLine("-OP" + paxosInstance.Epoch + "- Reached consensus:");
-                Console.WriteLine();
-                for(int i = 0; i < paxosInstance.ProposedValue.Count; i++){
-                    Console.WriteLine("Lease nr " + i + ":");
-                    Console.WriteLine(paxosInstance.ProposedValue[i].ToString());
-                    Console.WriteLine();
-                }
             }else{
-                Console.WriteLine("no");
+                Console.WriteLine(" No");
                 _epochResult[paxosInstance.Epoch].SetResult(new List<Lease>());
             }
+
+            Console.WriteLine("-OP" + paxosInstance.Epoch + "- Reached consensus:");
+            Console.WriteLine();
+            for(int i = 0; i < paxosInstance.ProposedValue.Count; i++){
+                Console.WriteLine("Lease nr " + i + ":");
+                Console.WriteLine(paxosInstance.ProposedValue[i].ToString());
+                Console.WriteLine();
+            }
+        }
+
+
+        private int GetMajorityNumberLeaseManagers(){
+            return (_numLeaseManagers / 2) + 1;
+            
         }
 
     }
