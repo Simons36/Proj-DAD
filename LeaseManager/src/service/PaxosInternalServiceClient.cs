@@ -16,7 +16,10 @@ namespace LeaseManager.src.service
 
         private int _majorityNumber;
 
-        public PaxosInternalServiceClient(string serverName, Dictionary<string, string> leaseManagerNameToUrl, int majorityNumber) : base(){
+        //Acceptable delay in milliseconds of the paxos requests response
+        private int _acceptableDelayPaxos;
+
+        public PaxosInternalServiceClient(string serverName, Dictionary<string, string> leaseManagerNameToUrl, int majorityNumber, int timeSlotDuration) : base(){
 
             List<string> leaseManagerUrls = new List<string>();
             _leaseManagersClients = new List<PaxosInternalService.PaxosInternalServiceClient>();
@@ -28,6 +31,10 @@ namespace LeaseManager.src.service
             }
 
             _majorityNumber = majorityNumber;
+            
+            //number to multiply timeslotduration to get acceptable delay
+            double acceptableDelayMultiplier = 1.5;
+            _acceptableDelayPaxos = (int) (acceptableDelayMultiplier * timeSlotDuration);
 
             InitChannels(leaseManagerUrls);
 
@@ -97,19 +104,36 @@ namespace LeaseManager.src.service
                 tasks.Add(client.AcceptAsync(acceptMessage).ResponseAsync);
             }
 
+
             foreach(Task<AcceptedMessage> task in tasks){
-                AcceptedMessage acceptedMessage = await task;
+                try{
+                    if(await Task.WhenAny(task, Task.Delay(_acceptableDelayPaxos)) == task){
 
-                PaxosMessageStruct paxosMessageStruct = PaxosMessagesParser.ParseAcceptedMessageToPaxosMessageStruct(acceptedMessage);
-                
-                returnList.Add(paxosMessageStruct);
+                        AcceptedMessage acceptedMessage = await task;
 
-                if((returnList.Count + 1) >= _majorityNumber){ // number of promises + 1 (this server)
-                    return returnList;
+                        PaxosMessageStruct paxosMessageStruct = PaxosMessagesParser.ParseAcceptedMessageToPaxosMessageStruct(acceptedMessage);
+
+                        returnList.Add(paxosMessageStruct);
+
+                        if((returnList.Count + 1) >= _majorityNumber){ // number of promises + 1 (this server)
+                            return returnList;
+                        }
+
+                    }else{
+                        throw new LeaseManagerTimedOutException("Accept");
+                    }
+
+                }catch(LeaseManagerTimedOutException e){
+                    throw e;
+                }catch(RpcException e){
+                    if(e.StatusCode == StatusCode.FailedPrecondition){
+                        Console.WriteLine("One lease manager had read timestamp higher than write timestamp, ignoring...");
+                    }
                 }
             }
 
             throw new Exception("Could not get majority of promise messages");
+
         }
 
 

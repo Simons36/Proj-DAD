@@ -111,7 +111,7 @@ namespace LeaseManager.src
             }
 
             //paxos state class
-            PaxosInternalServiceClient paxosInternalServiceClient = new PaxosInternalServiceClient(name, leaseManagerNameToUrl, (leaseManagerNameToUrl.Count / 2) + 1);
+            PaxosInternalServiceClient paxosInternalServiceClient = new PaxosInternalServiceClient(name, leaseManagerNameToUrl, (leaseManagerNameToUrl.Count / 2) + 1, duration);
             PaxosImplementation paxos = new PaxosImplementation(timeslotNumber, duration, startingTime, leaseManagerNameToId, 
                                                                 crashingTimeSlot, suspectedServers, id, paxosInternalServiceClient);
 
@@ -141,8 +141,9 @@ namespace LeaseManager.src
                 Console.WriteLine("Error while trying to start server: " + e.Message);
             }
 
-
+            Console.WriteLine();
             Console.WriteLine("Lease Manager server listening on port " + port);
+            Console.WriteLine();
 
             try{
                 paxos.Start(); //start paxos algorithm

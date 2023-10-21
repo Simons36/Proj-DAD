@@ -33,10 +33,15 @@ namespace LeaseManager.src.service
 
         public override Task<AcceptedMessage> Accept(AcceptMessage request, ServerCallContext context)
         {
-            PaxosMessageStruct acceptedMessage = _paxosClient.AcceptRequestHandler(
-                PaxosMessagesParser.ParseAcceptMessageToPaxosMessageStruct(request));
+            try{
+                PaxosMessageStruct acceptedMessage = _paxosClient.AcceptRequestHandler(
+                    PaxosMessagesParser.ParseAcceptMessageToPaxosMessageStruct(request));
 
-            return Task.FromResult(PaxosMessagesParser.ParsePaxosMessageStructToAcceptedMessage(acceptedMessage));
+                return Task.FromResult(PaxosMessagesParser.ParsePaxosMessageStructToAcceptedMessage(acceptedMessage));
+
+            }catch (ReadTimestampGreaterThanWriteTimestampException){
+                throw new ReadTimestampGreaterThanWriteTimestampRpcException();
+            }
             
         }
     }

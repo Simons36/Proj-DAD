@@ -20,11 +20,19 @@ namespace Common.structs
             }
         }
 
+        public Lease(){
+            _dadIntsKeys = new HashSet<string>();
+        }
+
         
 
         public void addDadInt(DadInt d)
         {
             _dadIntsKeys.Add(d.Key);
+        }
+
+        public void addDadInt(string key){
+            _dadIntsKeys.Add(key);
         }
 
         public string AssignedTransactionManager

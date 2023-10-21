@@ -116,8 +116,8 @@ namespace TransactionManager
                 Console.WriteLine("Error starting server: " + e.Message);
             }
 
-
             Console.WriteLine("Server listening on " + hostname + ":" + port);
+           
             while (true);
         }
 

@@ -66,6 +66,12 @@ namespace LeaseManager.src.paxos
 
         public void Start(){
 
+            Console.WriteLine("----------------------");
+            Console.WriteLine("LABEL:");
+            Console.WriteLine("-LPX- -> Corresponds to an operation of listening phase of epoch X");
+            Console.WriteLine("-OPX- -> Corresponds to an operation of ordering phase of epoch X");
+            Console.WriteLine("----------------------");
+
             _currentEpoch = -1;
 
             int timeToWait = 0;
@@ -92,9 +98,12 @@ namespace LeaseManager.src.paxos
         public int RegisterLeaseRequest(Lease requestedLease){
             int thisRequestEpoch = _currentEpoch;
 
-            Console.WriteLine("Received lease request:");
-            Console.WriteLine(requestedLease.ToString());
-            Console.WriteLine("Adding to current epoch received leases");
+            Console.WriteLine("-LP" + thisRequestEpoch 
+                                           + "- Received the following lease request:\n\n" 
+                                           + requestedLease.ToString() 
+                                           + "\n-LP" 
+                                           + thisRequestEpoch 
+                                           + "- Adding to current epoch received leases");
 
             lock(this){
                 _currentEpochReceivedLeases.Add(requestedLease);
@@ -102,14 +111,8 @@ namespace LeaseManager.src.paxos
 
             lock(this){
 
-                //TODO: remove this
-                if(thisRequestEpoch == -1){
-                    thisRequestEpoch = 0;
-                }
-
                 if(!_epochResult.ContainsKey(thisRequestEpoch )){
                     _epochResult.Add(thisRequestEpoch , new TaskCompletionSource<List<Lease>>());
-                    Console.WriteLine("Added task completion source for epoch: " + thisRequestEpoch);
                 }
             }
 
@@ -124,11 +127,16 @@ namespace LeaseManager.src.paxos
 
         public async void AdvanceEpoch(){
             _currentEpoch++;
-            Console.WriteLine("Advancing epoch to nr: " + _currentEpoch);
             
             if(_currentEpoch != 0){
+                int previousEpoch = _currentEpoch - 1;
+                
+                Console.WriteLine("---------------- EPOCH NR: " + previousEpoch + " | ORDERING PHASE STARTED -----------------");
+                Console.WriteLine();
 
-                Task orderRequests = new Task(() => OrderPreviousEpochRequests(_currentEpochReceivedLeases, _currentEpoch - 1));
+                List<Lease> copiedCurrentEpochReceivedLeases = new List<Lease>(_currentEpochReceivedLeases);
+
+                Task orderRequests = new Task(() => OrderPreviousEpochRequests(copiedCurrentEpochReceivedLeases, previousEpoch));
                 orderRequests.Start();
 
                 lock(this){
@@ -136,20 +144,23 @@ namespace LeaseManager.src.paxos
                 }
 
                 await orderRequests;
+                
             }
+            Console.WriteLine("---------------- EPOCH NR: " + _currentEpoch + " | LISTENING PHASE STARTED -----------------");
+            Console.WriteLine();
 
         }
 
         public async void OrderPreviousEpochRequests(List<Lease> previousEpochRequests, int epoch){
             
 
-            Console.WriteLine("Ordering previous epoch requests");
+            Console.WriteLine("-OP" + epoch + "- Ordering epoch " + epoch + " requests");
             
 
             bool isThisServerLeader;
 
             if(!_isCurrentLeader){
-                isThisServerLeader = ThisServerLeader();
+                isThisServerLeader = ThisServerLeader(epoch);
             }else{
                 isThisServerLeader = true;
             }
@@ -168,8 +179,8 @@ namespace LeaseManager.src.paxos
 
         }
 
-        public bool ThisServerLeader(){
-            Console.Write("Determining leader: ");
+        public bool ThisServerLeader(int epoch){
+            Console.Write("-OP" + epoch + "- Determining leader: ");
 
             if(_id == 1){
                 Console.WriteLine("this server is leader.");
@@ -218,7 +229,7 @@ namespace LeaseManager.src.paxos
         }
 
         public PaxosMessageStruct PrepareRequestHandler(PaxosMessageStruct paxosMessageStruct){
-            Console.WriteLine("Received prepare request with write timestamp: " + paxosMessageStruct.WriteTimestamp + " and epoch: " + paxosMessageStruct.Epoch);
+            Console.WriteLine("-OP" + paxosMessageStruct.Epoch + "- Received prepare request with write timestamp: " + paxosMessageStruct.WriteTimestamp + " and epoch: " + paxosMessageStruct.Epoch);
 
             PaxosInstance paxosInstance = _activePaxosInstances[paxosMessageStruct.Epoch];
 
@@ -230,20 +241,35 @@ namespace LeaseManager.src.paxos
         }
 
         public PaxosMessageStruct AcceptRequestHandler(PaxosMessageStruct paxosMessageStruct){
-            Console.WriteLine("Received accept request with write timestamp: " + paxosMessageStruct.WriteTimestamp + " and epoch: " + paxosMessageStruct.Epoch);
+            Console.WriteLine("-OP" + paxosMessageStruct.Epoch + "- Received accept request with write timestamp: " + paxosMessageStruct.WriteTimestamp + " and epoch: " + paxosMessageStruct.Epoch);
 
             PaxosInstance paxosInstance = _activePaxosInstances[paxosMessageStruct.Epoch];
 
-            return paxosInstance.AcceptRequestHandler(paxosMessageStruct);
+            try{
+                return paxosInstance.AcceptRequestHandler(paxosMessageStruct);
+            }catch(ReadTimestampGreaterThanWriteTimestampException e){
+                throw e;
+            }
+
             
         }
 
         public void CheckIfNeededToSendTransactionMangers(PaxosInstance paxosInstance){
-            Console.WriteLine("Checking if need to send transaction managers");
+            Console.Write("-OP" + paxosInstance.Epoch + "- Checking if this server needs to send transaction managers the result of epoch " + paxosInstance.Epoch + ":");
 
             if(paxosInstance.IsLeaderCurrentEpoch){
+                Console.WriteLine("yes");
                 _epochResult[paxosInstance.Epoch].SetResult(paxosInstance.ProposedValue);
+
+                Console.WriteLine("-OP" + paxosInstance.Epoch + "- Reached consensus:");
+                Console.WriteLine();
+                for(int i = 0; i < paxosInstance.ProposedValue.Count; i++){
+                    Console.WriteLine("Lease nr " + i + ":");
+                    Console.WriteLine(paxosInstance.ProposedValue[i].ToString());
+                    Console.WriteLine();
+                }
             }else{
+                Console.WriteLine("no");
                 _epochResult[paxosInstance.Epoch].SetResult(new List<Lease>());
             }
         }
