@@ -71,7 +71,7 @@ namespace TransactionManager
 
             //TransactionManagerServiceImpl transactionService = new TransactionManagerServiceImpl(thisUrl, tMsUrls);
             LeaseManagerServiceImpl leaseService = new LeaseManagerServiceImpl(leaseManagersUrls);
-            TransactionManagerState state = new TransactionManagerState(leaseService, name);
+            TransactionManagerState state = new TransactionManagerState(leaseService, name, startingTime, duration);
             ClientServiceImpl clientService = new ClientServiceImpl(state);
 
             startServer(thisUrl, clientService);

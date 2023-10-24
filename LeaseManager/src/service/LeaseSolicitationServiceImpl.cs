@@ -32,5 +32,11 @@ namespace LeaseManager.src.service {
 
             return reply;
         }
+
+        public override Task<UnreceivedLeasesWarningReply> UnreceivedLeasesWarning(UnreceivedLeasesWarningRequest request, ServerCallContext context)
+        {
+            _paxos.WarningUnreceivedLeasesHandler(request.Epoch);
+            return Task.FromResult(new UnreceivedLeasesWarningReply());
+        }
     }
 }

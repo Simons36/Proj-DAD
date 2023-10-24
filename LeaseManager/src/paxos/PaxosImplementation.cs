@@ -36,6 +36,11 @@ namespace LeaseManager.src.paxos
         private Dictionary<int, PaxosInstance> _activePaxosInstances;
 
         private Dictionary<int, TaskCompletionSource<List<Lease>>> _epochResult;
+        
+        //to protect from multiple warnings sent by different transaction managers about same thing
+        private Dictionary<int, bool> _hasReceivedWarningOfEpochInCurrentEpoch; //key: epoch, value: has received warning
+
+        private int _totalReceivedWarnings;
 
         public PaxosImplementation(int timeslotNumber, int duration, TimeOnly startingTime, Dictionary<string, int> leaseManagerNameToId, 
                                     int crashingTimeSlot, Dictionary<string, List<int>> suspectedServers, int id, PaxosInternalServiceClient paxosClient){
@@ -61,6 +66,11 @@ namespace LeaseManager.src.paxos
             _activePaxosInstances = new Dictionary<int, PaxosInstance>();
 
             _epochResult = new Dictionary<int, TaskCompletionSource<List<Lease>>>();
+
+            _hasReceivedWarningOfEpochInCurrentEpoch = new Dictionary<int, bool>();
+
+            _totalReceivedWarnings = 0;
+            
 
         }
 
@@ -114,7 +124,6 @@ namespace LeaseManager.src.paxos
             }
 
             lock(this){
-
                 if(!_epochResult.ContainsKey(thisRequestEpoch )){
                     _epochResult.Add(thisRequestEpoch , new TaskCompletionSource<List<Lease>>());
                 }
@@ -133,6 +142,10 @@ namespace LeaseManager.src.paxos
             _currentEpoch++;
             Console.WriteLine("---------------- EPOCH NR: " + _currentEpoch + " | LISTENING PHASE STARTED -----------------");
             Console.WriteLine();
+            _hasReceivedWarningOfEpochInCurrentEpoch.Add(_currentEpoch, false);
+            foreach(int epoch in _hasReceivedWarningOfEpochInCurrentEpoch.Keys){
+                _hasReceivedWarningOfEpochInCurrentEpoch[epoch] = false;
+            }
             
             if(_currentEpoch != 1){
                 int previousEpoch = _currentEpoch - 1;
@@ -189,7 +202,7 @@ namespace LeaseManager.src.paxos
         public bool ThisServerLeader(int epoch){
             Console.Write("-OP" + epoch + "- Determining leader: ");
 
-            if(_id == 1){
+            if(_id == 1 + _totalReceivedWarnings){
                 Console.WriteLine("this server is leader.");
                 return true;
             }else{
@@ -266,11 +279,18 @@ namespace LeaseManager.src.paxos
 
             if(paxosInstance.IsLeaderCurrentEpoch){
                 Console.WriteLine(" Yes");
-                _epochResult[paxosInstance.Epoch].SetResult(paxosInstance.ProposedValue);
+                if(_epochResult.ContainsKey(paxosInstance.Epoch)){
+                    _epochResult[paxosInstance.Epoch].SetResult(paxosInstance.ProposedValue);
+                    Console.WriteLine("There were no requests in epoch " + paxosInstance.Epoch + " so no need to send result to transaction managers");
+                }
 
             }else{
                 Console.WriteLine(" No");
-                _epochResult[paxosInstance.Epoch].SetResult(new List<Lease>());
+                if(_epochResult.ContainsKey(paxosInstance.Epoch)){
+                    _epochResult[paxosInstance.Epoch].SetResult(new List<Lease>());
+                }else{
+                    Console.WriteLine("There were no requests in epoch " + paxosInstance.Epoch + " so no need to send result to transaction managers");
+                }
             }
 
             Console.WriteLine("-OP" + paxosInstance.Epoch + "- Reached consensus:");
@@ -282,10 +302,27 @@ namespace LeaseManager.src.paxos
             }
         }
 
+        public void WarningUnreceivedLeasesHandler(int epoch){
 
-        private int GetMajorityNumberLeaseManagers(){
-            return (_numLeaseManagers / 2) + 1;
-            
+
+            lock(_hasReceivedWarningOfEpochInCurrentEpoch){
+
+                if(!_hasReceivedWarningOfEpochInCurrentEpoch[epoch]){
+                    _hasReceivedWarningOfEpochInCurrentEpoch[epoch] = true;
+                    Console.WriteLine("Received warning about epoch " + epoch + "; tm is complaining it hasn't received an answer");
+
+                    //leader probably crashed, moving on to next one
+                    _totalReceivedWarnings++;
+
+                    bool isThisServerLeader = ThisServerLeader(epoch);
+
+                    _activePaxosInstances[epoch].RestartInstance(isThisServerLeader);
+
+                    _isCurrentLeader = isThisServerLeader;
+                }
+
+
+            }
         }
 
     }

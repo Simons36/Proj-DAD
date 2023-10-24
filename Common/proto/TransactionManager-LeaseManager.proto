@@ -4,6 +4,7 @@ import "ProtoStructs.proto";
 
 service LeaseSolicitationService{
     rpc LeaseSolicitation(LeaseRequest) returns (LeaseReply);
+    rpc UnreceivedLeasesWarning(UnreceivedLeasesWarningRequest) returns (UnreceivedLeasesWarningReply);
 }
 
 message LeaseRequest{
@@ -13,4 +14,11 @@ message LeaseRequest{
 message LeaseReply{
     int32 epoch = 1;
     repeated ProtoLease leases = 2;
+}
+
+message UnreceivedLeasesWarningRequest{
+    int32 epoch = 1;
+}
+
+message UnreceivedLeasesWarningReply{
 }

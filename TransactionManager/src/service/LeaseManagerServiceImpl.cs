@@ -65,18 +65,35 @@ namespace TransactionManager.src.service
 
             List<Lease> parsedResponse = new List<Lease>();
 
-            //get the first non-empty response (not empty responses are the ones from the learners)
-            // foreach(LeaseReply reply in responseList){
-            //     if(reply.Leases.Count > 0){
-            //         foreach(ProtoLease protoLeaseInside in reply.Leases){
-            //             parsedResponse.Add(UtilMethods.parseProtoLeaseToLease(protoLeaseInside));
-            //         }
-            //         break;
-            //     }
-            // }
+            foreach(LeaseReply leaseReply in responseList){
+                if(leaseReply.Leases.Count > 0){
+                    foreach(ProtoLease protoLeaseInside in leaseReply.Leases){
+                        parsedResponse.Add(UtilMethods.parseProtoLeaseToLease(protoLeaseInside));
+                    }
+                    break;
+                }
+            }
 
-            //TODO: implement parsedResponse
             return parsedResponse;
+        }
+
+        public void WarnUnreceivedLeases(int epoch){
+            UnreceivedLeasesWarningRequest request = new UnreceivedLeasesWarningRequest();
+            request.Epoch = epoch;
+            List<LeaseSolicitationService.LeaseSolicitationServiceClient> clientsToRemove = new List<LeaseSolicitationService.LeaseSolicitationServiceClient>();
+
+            foreach(LeaseSolicitationService.LeaseSolicitationServiceClient client in _leaseManagersClients){
+                try{
+                    client.UnreceivedLeasesWarning(request);
+                }catch(RpcException){
+                    Console.WriteLine("An error ocurred in one of the requests to the lease managers, removing it from further communications");
+                    clientsToRemove.Add(client);
+                }
+            }
+
+            foreach(LeaseSolicitationService.LeaseSolicitationServiceClient client in clientsToRemove){
+                _leaseManagersClients.Remove(client);
+            }
         }
         
     }

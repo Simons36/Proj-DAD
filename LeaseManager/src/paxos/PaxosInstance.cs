@@ -206,6 +206,19 @@ namespace LeaseManager.src.paxos
 
         }
 
+        public void RestartInstance(bool isThisServerLeader){
+            _wasLeaderPreviousEpoch = false;
+            _isLeaderCurrentEpoch = isThisServerLeader;
+            _writeTimestamp = 0;
+            _readTimestamp = 0;
+            Console.Write("Epoch " + _epoch + "failed, restarting it. This server will ");
+            if(!isThisServerLeader){
+                Console.Write("NOT ");
+            }
+            Console.WriteLine("be leader");
+            StartInstance();
+        }
+
 
     }
 }
