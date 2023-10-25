@@ -7,6 +7,9 @@ using LeaseManager.src.paxos;
 using LeaseManager.src.service.util;
 using LeaseManager.src.paxos.exceptions;
 using LeaseManager.src.service.exceptions;
+using Common.structs;
+using Common.util;
+
 
 namespace LeaseManager.src.service
 {
@@ -43,6 +46,21 @@ namespace LeaseManager.src.service
                 throw new ReadTimestampGreaterThanWriteTimestampRpcException();
             }
             
+        }
+
+        public override Task<EmptyMessage> SentToTransactionManagersConfirmation(LeaseReplySent request, ServerCallContext context){
+            //parse request proto leases to leases
+            List<Lease> leases = new List<Lease>();
+            foreach(ProtoLease leaseProto in request.Leases){
+                leases.Add(UtilMethods.parseProtoLeaseToLease(leaseProto));
+            }
+            _paxosClient.SentToTransactionManagersConfirmationHandler(request.Epoch, leases);
+            return Task.FromResult(new EmptyMessage());
+        }
+
+        public override Task<CheckConfirmationReceivedReply> CheckConfirmationReceived(CheckConfirmationReceivedRequest request, ServerCallContext context){
+            bool confirmationReceived = _paxosClient.CheckConfirmationReceivedHandler(request.Epoch);
+            return Task.FromResult(new CheckConfirmationReceivedReply{ConfirmationReceived = confirmationReceived});
         }
     }
 }

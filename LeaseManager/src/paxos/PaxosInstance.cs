@@ -24,7 +24,11 @@ namespace LeaseManager.src.paxos
 
         private List<Lease> _proposedValue;
 
+        private List<Lease> _unmodifiedProposedValue;
+
         private PaxosInternalServiceClient _paxosClient;
+
+        private bool _hasReceivedFinalConfirmation;
 
         public PaxosInstance(int id, int epoch, bool isLeaderCurrentEpoch, bool wasLeaderPreviousEpoch, 
                                 List<Lease> proposedValue, PaxosInternalServiceClient paxosClient){
@@ -35,9 +39,11 @@ namespace LeaseManager.src.paxos
             _writeTimestamp = 0;
             _readTimestamp = 0;
 
+            _unmodifiedProposedValue = proposedValue;
             ProposedValueSetter(proposedValue);
 
             _paxosClient = paxosClient;
+            _hasReceivedFinalConfirmation = false;
         }
 
         //getter for iscurrenleader
@@ -53,6 +59,16 @@ namespace LeaseManager.src.paxos
         //getter for proposed value
         public List<Lease> ProposedValue{
             get { return _proposedValue; }
+        }
+
+        //getter for unmodified proposed value
+        public List<Lease> UnmodifiedProposedValue{
+            get { return _unmodifiedProposedValue; }
+        }
+
+        //getter for has received final confirmation
+        public bool HasReceivedFinalConfirmation{
+            get { return _hasReceivedFinalConfirmation; }
         }
 
         private void ProposedValueSetter(List<Lease> receivedLeases){
@@ -157,6 +173,9 @@ namespace LeaseManager.src.paxos
 
                 List<PaxosMessageStruct> receivedAccepted = Task.Run(() =>{return _paxosClient.broadcastAcceptMessage(acceptMessage);}).Result;
 
+                //because it is the leader, it doesnt make sense to wait for confirmation from itself
+                _hasReceivedFinalConfirmation = true;
+
                 Console.WriteLine("-OP" + _epoch + "-Value has been agreed upon");
 
             }else{
@@ -206,17 +225,9 @@ namespace LeaseManager.src.paxos
 
         }
 
-        public void RestartInstance(bool isThisServerLeader){
-            _wasLeaderPreviousEpoch = false;
-            _isLeaderCurrentEpoch = isThisServerLeader;
-            _writeTimestamp = 0;
-            _readTimestamp = 0;
-            Console.Write("Epoch " + _epoch + "failed, restarting it. This server will ");
-            if(!isThisServerLeader){
-                Console.Write("NOT ");
-            }
-            Console.WriteLine("be leader");
-            StartInstance();
+        public void SentToTransactionManagersConfirmationHandler(){
+            Console.WriteLine("-OP" + _epoch + "-Received confirmation from leader that value has been sent to transaction managers");
+            _hasReceivedFinalConfirmation = true;
         }
 
 

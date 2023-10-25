@@ -6,6 +6,7 @@ using Grpc.Net.Client;
 using LeaseManager.src.paxos;
 using LeaseManager.src.service.exceptions;
 using LeaseManager.src.service.util;
+using Common.util;
 
 namespace LeaseManager.src.service
 {
@@ -142,8 +143,35 @@ namespace LeaseManager.src.service
 
         }
 
+        public void BroadcastSentToTmsConfirmation(int epoch, List<Lease> epochResult){
+            //parse epochResult to protoLeases
+            List<ProtoLease> protoLeases = new List<ProtoLease>();
+            foreach(Lease lease in epochResult){
+                protoLeases.Add(UtilMethods.parseLeaseToProtoLease(lease));
+            }
+            foreach(PaxosInternalService.PaxosInternalServiceClient client in _leaseManagersClients){
+                try{
+
+                    client.SentToTransactionManagersConfirmation(new LeaseReplySent{Epoch = epoch, Leases = {protoLeases}});
+                }catch(RpcException){
+                    Console.WriteLine("An error ocurred in one of the requests to the lease managers, probably crashed");
+                }
+            }
+        }
 
 
+        public List<bool> BroadcastCheckConfirmationReceived(int epoch){
+            List<bool> confirmationReceivedList = new List<bool>();
+            foreach(PaxosInternalService.PaxosInternalServiceClient client in _leaseManagersClients){
+                try{
+                    CheckConfirmationReceivedReply reply = client.CheckConfirmationReceived(new CheckConfirmationReceivedRequest{Epoch = epoch});
+                    confirmationReceivedList.Add(reply.ConfirmationReceived);
+                }catch(RpcException){
+                    Console.WriteLine("An error ocurred in one of the requests to the lease managers, probably crashed");
+                }
+            }
+            return confirmationReceivedList;
+        }
         
     }
 }

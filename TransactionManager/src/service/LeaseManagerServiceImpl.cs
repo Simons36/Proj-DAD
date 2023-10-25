@@ -1,9 +1,8 @@
-using System.Collections;
-using System.Net;
 using Common.structs;
 using Common.util;
 using Grpc.Core;
 using Grpc.Net.Client;
+using TransactionManager.src.structs;
 
 namespace TransactionManager.src.service
 {
@@ -32,7 +31,7 @@ namespace TransactionManager.src.service
 
         }
 
-        public async Task<List<Lease>> LeaseSolicitation(Lease lease){
+        public async Task<LeaseSolicitationReturnStruct> LeaseSolicitation(Lease lease){
 
             LeaseRequest request = new LeaseRequest();
             ProtoLease protoLease = UtilMethods.parseLeaseToProtoLease(lease);
@@ -53,14 +52,14 @@ namespace TransactionManager.src.service
                 try{
                     responseList.Add(await tasksPerLeaseManager[key]);
                 }catch(RpcException){
-                    Console.WriteLine("An error ocurred in one of the requests to the lease managers, removing it from further communications");
-                    clientsToRemove.Add(key);
+                    // Console.WriteLine("An error ocurred in one of the requests to the lease managers, removing it from further communications");
+                    // clientsToRemove.Add(key);
                 }
             }
 
-            foreach(LeaseSolicitationService.LeaseSolicitationServiceClient client in clientsToRemove){
-                _leaseManagersClients.Remove(client);
-            }
+            // foreach(LeaseSolicitationService.LeaseSolicitationServiceClient client in clientsToRemove){
+            //     _leaseManagersClients.Remove(client);
+            // }
 
 
             List<Lease> parsedResponse = new List<Lease>();
@@ -74,26 +73,7 @@ namespace TransactionManager.src.service
                 }
             }
 
-            return parsedResponse;
-        }
-
-        public void WarnUnreceivedLeases(int epoch){
-            UnreceivedLeasesWarningRequest request = new UnreceivedLeasesWarningRequest();
-            request.Epoch = epoch;
-            List<LeaseSolicitationService.LeaseSolicitationServiceClient> clientsToRemove = new List<LeaseSolicitationService.LeaseSolicitationServiceClient>();
-
-            foreach(LeaseSolicitationService.LeaseSolicitationServiceClient client in _leaseManagersClients){
-                try{
-                    client.UnreceivedLeasesWarning(request);
-                }catch(RpcException){
-                    Console.WriteLine("An error ocurred in one of the requests to the lease managers, removing it from further communications");
-                    clientsToRemove.Add(client);
-                }
-            }
-
-            foreach(LeaseSolicitationService.LeaseSolicitationServiceClient client in clientsToRemove){
-                _leaseManagersClients.Remove(client);
-            }
+            return new LeaseSolicitationReturnStruct(responseList[0].Epoch, parsedResponse);
         }
         
     }

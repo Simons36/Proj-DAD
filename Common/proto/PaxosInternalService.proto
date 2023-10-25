@@ -5,6 +5,8 @@ import "ProtoStructs.proto";
 service PaxosInternalService{
     rpc Prepare(PrepareMessage) returns (PromiseMessage);
     rpc Accept(AcceptMessage) returns (AcceptedMessage);
+    rpc SentToTransactionManagersConfirmation(LeaseReplySent) returns (EmptyMessage);
+    rpc CheckConfirmationReceived(CheckConfirmationReceivedRequest) returns (CheckConfirmationReceivedReply);
 }
 
 message PrepareMessage{
@@ -29,3 +31,21 @@ message AcceptedMessage{
     repeated ProtoLease leases = 2;
     int32 epoch = 3;
 }
+
+message LeaseReplySent{
+    int32 epoch = 1;
+    repeated ProtoLease leases = 2;
+}
+
+message EmptyMessage{
+}
+
+message CheckConfirmationReceivedRequest{
+    int32 epoch = 1;
+}
+
+message CheckConfirmationReceivedReply{
+    bool confirmationReceived = 1;
+}
+
+
