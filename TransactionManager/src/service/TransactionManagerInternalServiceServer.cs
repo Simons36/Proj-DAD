@@ -26,6 +26,10 @@ namespace TransactionManager.src.service
                 dadInts.Add(UtilMethods.parseProtoDadInt(dadIntProto));
             }
 
+            foreach(string str in request.GaveUpLeasesOnThisKey){
+                Console.WriteLine("Other server Gave up lease on key: " + str);
+            }
+
             Task.Run(() => _state.ReceivedTransactionExecutionHandler(request.TransactionKeys.ToList(), 
                                                                          request.GaveUpLeasesOnThisKey.ToList(), 
                                                                                                  dadInts));

@@ -1,2 +1,2 @@
 W 5000
-T () (<"miguel",20>,<"simao",5>,<"jose",99>,<"ola",1>)
+T ("miguel") (<"miguel",20>,<"simao",5>,<"jose",99>,<"ola",1>)

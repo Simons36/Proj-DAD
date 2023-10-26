@@ -42,6 +42,20 @@ namespace TransactionManager.src.service
         public async void CommunicateTransactionHasBeenDone(List<string> keysUsedInExecution, List<string> keysWithLeasesToGiveUpOn, List<DadInt> dadIntsToBeWritten){
             List<ProtoDadInt> listProtoDadInts = new List<ProtoDadInt>();
 
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine();
+            foreach(string str in keysUsedInExecution){
+                Console.WriteLine("Passing on key " + str);
+            }
+            Console.WriteLine();
+            foreach(string str in keysWithLeasesToGiveUpOn){
+                Console.WriteLine("Giving up on key " + str);
+            }
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine();
+
             foreach(DadInt dadInt in dadIntsToBeWritten){
                 listProtoDadInts.Add(UtilMethods.parseCommonDadInt(dadInt));
             }
@@ -63,6 +77,7 @@ namespace TransactionManager.src.service
                 
             }catch(RpcException){
             }
+                Console.WriteLine("HAHAHAHHAHAHHAHHAHAHHAHAHHA");
 
         }
     }
