@@ -71,10 +71,23 @@ namespace TransactionManager
 
             //TransactionManagerServiceImpl transactionService = new TransactionManagerServiceImpl(thisUrl, tMsUrls);
             LeaseManagerServiceImpl leaseService = new LeaseManagerServiceImpl(leaseManagersUrls);
-            TransactionManagerState state = new TransactionManagerState(leaseService, name, startingTime, duration);
+            TransactionManagerInternalServiceClient transactionManagerInternalServiceClient = new TransactionManagerInternalServiceClient(tMsUrls, thisUrl);
+            TransactionManagerState state = new TransactionManagerState(leaseService, name, startingTime, 
+                                        duration, timeslotNumber, transactionManagerInternalServiceClient);
             ClientServiceImpl clientService = new ClientServiceImpl(state);
+            TransactionManagerInternalServiceServer transactionManagerInternalServiceServer = new TransactionManagerInternalServiceServer(state);
+            
 
-            startServer(thisUrl, clientService);
+            try{
+                Server server = startServer(thisUrl, clientService, transactionManagerInternalServiceServer);
+
+                state.StartTransactionManager();
+
+                DisposeServer(server);
+
+            }catch(Exception e){
+                Console.WriteLine("Error: " + e.Message);
+            }
 
             Console.WriteLine("Press any key to stop the server...");
             Console.ReadKey();
@@ -96,7 +109,7 @@ namespace TransactionManager
             return true;
         }
 
-        private static void startServer(string thisUrl, ClientServiceImpl clientService)
+        private static Server startServer(string thisUrl, ClientServiceImpl clientService, TransactionManagerInternalServiceServer transactionManagerInternalServiceServer)
         {
             string[] splitString = thisUrl.Split(":");
 
@@ -105,20 +118,25 @@ namespace TransactionManager
 
             int port = int.Parse(splitString[2]);
 
+            Server server;
+
             try{
-                Server server = new Server
+                server = new Server
                 {
-                    Services = { ClientService.BindService(clientService) },
+                    Services = { ClientService.BindService(clientService), TransactionManagerInternalService.BindService(transactionManagerInternalServiceServer) },
                     Ports = { new ServerPort(hostname, port, ServerCredentials.Insecure) }
                 };
                 server.Start();
-            }catch(Exception e){
-                Console.WriteLine("Error starting server: " + e.Message);
+            }catch(Exception){
+                throw;
             }
 
             Console.WriteLine("Server listening on " + hostname + ":" + port);
-           
-            while (true);
+            return server;
+        }
+
+        private static void DisposeServer(Server server){
+            server.ShutdownAsync().Wait();
         }
 
         private static void WriteArguments(string name, string thisUrl, TimeOnly startingTime, List<string> tMsUrls, List<string> leaseManagersUrls){

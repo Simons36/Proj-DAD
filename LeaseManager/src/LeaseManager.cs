@@ -154,6 +154,7 @@ namespace LeaseManager.src
                 paxos.Start(); //start paxos algorithm
             }catch(Exception e){
                 Console.WriteLine("Error while trying to start server: " + e.Message);
+                Console.ReadKey();
             }
 
             Console.WriteLine("Shutting down server...");

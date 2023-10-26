@@ -273,31 +273,43 @@ namespace LeaseManager.src.paxos
         }
 
         public void CheckIfNeededToSendTransactionMangers(PaxosInstance paxosInstance){
-            Console.Write("-OP" + paxosInstance.Epoch + "- Checking if this server needs to send transaction managers the result of epoch " + paxosInstance.Epoch + ":");
-
-            if(paxosInstance.IsLeaderCurrentEpoch){
-                Console.WriteLine(" Yes");
-                if(_epochResult.ContainsKey(paxosInstance.Epoch)){
-                    _epochResult[paxosInstance.Epoch].SetResult(paxosInstance.ProposedValue);
-                }
-
-                _paxosClient.BroadcastSentToTmsConfirmation(paxosInstance.Epoch, paxosInstance.ProposedValue);
-
+            
+            if(!_epochResult.ContainsKey(paxosInstance.Epoch)){
+                Console.WriteLine("-OP" + paxosInstance.Epoch + "- There were no requests in epoch " + paxosInstance.Epoch + " so no need to send result to transaction managers");
+                paxosInstance.HasReceivedFinalConfirmation = true;
             }else{
-                Console.WriteLine(" No");
-                if(_epochResult.ContainsKey(paxosInstance.Epoch)){
-                    _epochResult[paxosInstance.Epoch].SetResult(new List<Lease>());
+                Console.Write("-OP" + paxosInstance.Epoch + "- Checking if this server needs to send transaction managers the result of epoch " + paxosInstance.Epoch + ":");
+
+                if(paxosInstance.IsLeaderCurrentEpoch){
+                    Console.WriteLine(" Yes");
+                    
+                    _epochResult[paxosInstance.Epoch].SetResult(paxosInstance.ProposedValue);
+
+                    //send confirmation to lease managers
+                    _paxosClient.BroadcastSentToTmsConfirmation(paxosInstance.Epoch, paxosInstance.ProposedValue);
+
                 }else{
+                    Console.WriteLine(" No");
+
+                    _epochResult[paxosInstance.Epoch].SetResult(new List<Lease>());
+
                     Console.WriteLine("There were no requests in epoch " + paxosInstance.Epoch + " so no need to send result to transaction managers");
+                    
                 }
+
             }
+        
 
             Console.WriteLine("-OP" + paxosInstance.Epoch + "- Reached consensus:");
             Console.WriteLine();
-            for(int i = 0; i < paxosInstance.ProposedValue.Count; i++){
-                Console.WriteLine("Lease nr " + i + ":");
-                Console.WriteLine(paxosInstance.ProposedValue[i].ToString());
-                Console.WriteLine();
+            if(paxosInstance.ProposedValue.Count != 0){
+                for(int i = 0; i < paxosInstance.ProposedValue.Count; i++){
+                    Console.WriteLine("Lease nr " + i + ":");
+                    Console.WriteLine(paxosInstance.ProposedValue[i].ToString());
+                    Console.WriteLine();
+                }
+            }else{
+                Console.WriteLine("EMPTY");
             }
         }
 

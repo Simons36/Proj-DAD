@@ -40,7 +40,7 @@ namespace LeaseManager.src.paxos
             _readTimestamp = 0;
 
             _unmodifiedProposedValue = proposedValue;
-            ProposedValueSetter(proposedValue);
+            _proposedValue = proposedValue;
 
             _paxosClient = paxosClient;
             _hasReceivedFinalConfirmation = false;
@@ -69,6 +69,7 @@ namespace LeaseManager.src.paxos
         //getter for has received final confirmation
         public bool HasReceivedFinalConfirmation{
             get { return _hasReceivedFinalConfirmation; }
+            set { _hasReceivedFinalConfirmation = value; }
         }
 
         private void ProposedValueSetter(List<Lease> receivedLeases){

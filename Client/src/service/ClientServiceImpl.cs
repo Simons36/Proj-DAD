@@ -1,5 +1,6 @@
 using Grpc.Net.Client;
 using Common.structs;
+using Grpc.Core;
 
 namespace Client.src.service
 {
@@ -42,9 +43,16 @@ namespace Client.src.service
             foreach(DadInt unparsedDadInt in dadIntsToWrite){
                 parsedDadInts.Add(new ProtoDadInt{ Key = unparsedDadInt.Key, Value = unparsedDadInt.Value});
             }
+            
+            List<ProtoDadInt> receivedList = new List<ProtoDadInt>();
 
-            List<ProtoDadInt> receivedList = (await _stub.TxSubmitAsync(new TxSubmitRequest { Client = client, ReadDads = { keysToRead }, WriteDads = { parsedDadInts } }))
+            try{
+            receivedList = (await _stub.TxSubmitAsync(new TxSubmitRequest { Client = client, ReadDads = { keysToRead }, WriteDads = { parsedDadInts } }))
                                              .DadInts.ToList();
+
+            }catch(RpcException e){
+                Console.WriteLine("Error: " + e.Message);
+            }
 
             List<DadInt> commonDadInts = new List<DadInt>();
             foreach(ProtoDadInt dadInt in receivedList){

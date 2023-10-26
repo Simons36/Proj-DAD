@@ -6,12 +6,12 @@ P LeaseManager2 L http://localhost:3337
 P LeaseManager3 L http://localhost:3338
 #
 #
-P client1 C client1-test3.txt
-P client2 C client2-test3.txt
+P client1 C client-test4.txt
+P client2 C client-test4.txt
 #
-S 9
+S 4
 #
-T 13:30:00
+T 03:40:40
 #
 # Each time slots lasts 10000 miliseconds
 D 10000

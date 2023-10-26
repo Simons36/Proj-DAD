@@ -75,6 +75,7 @@ namespace TransactionManager.src.service
 
             return new LeaseSolicitationReturnStruct(responseList[0].Epoch, parsedResponse);
         }
+
         
     }
 }

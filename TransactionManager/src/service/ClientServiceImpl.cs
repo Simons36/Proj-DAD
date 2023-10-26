@@ -16,26 +16,31 @@ namespace TransactionManager.src.service
         }
 
         public override async Task<TxSubmitReply> TxSubmit(TxSubmitRequest request, ServerCallContext context){
-            Console.WriteLine("Received TxSubmit request from client " + request.Client);
+            try{
+                Console.WriteLine("Received TxSubmit request from client " + request.Client);
 
-            string clientId = request.Client;
-            List<string> keysToBeRead = request.ReadDads.ToList();
-            List<ProtoDadInt> dadIntsToBeWritten = request.WriteDads.ToList();
+                string clientId = request.Client;
+                List<string> keysToBeRead = request.ReadDads.ToList();
+                List<ProtoDadInt> dadIntsToBeWritten = request.WriteDads.ToList();
 
-            List<DadInt> newDadIntsToBeWritten = new List<DadInt>();
+                List<DadInt> newDadIntsToBeWritten = new List<DadInt>();
 
-            foreach(ProtoDadInt protoDadInt in dadIntsToBeWritten){
-                newDadIntsToBeWritten.Add(UtilMethods.parseProtoDadInt(protoDadInt));
+                foreach(ProtoDadInt protoDadInt in dadIntsToBeWritten){
+                    newDadIntsToBeWritten.Add(UtilMethods.parseProtoDadInt(protoDadInt));
+                }
+
+                List<DadInt> returnedDadInts = await _state.TransactionHandler(clientId, keysToBeRead, newDadIntsToBeWritten);
+                
+                List<ProtoDadInt> newReturnedDadInts = new List<ProtoDadInt>();
+                foreach(DadInt commonDadInt in returnedDadInts){
+                    newReturnedDadInts.Add(UtilMethods.parseCommonDadInt(commonDadInt));
+                }
+                return new TxSubmitReply { DadInts = { newReturnedDadInts } };
+            }catch(Exception e){
             }
 
-            List<DadInt> returnedDadInts = await _state.TransactionHandler(clientId, keysToBeRead, newDadIntsToBeWritten);
-            
-            List<ProtoDadInt> newReturnedDadInts = new List<ProtoDadInt>();
-            foreach(DadInt commonDadInt in returnedDadInts){
-                newReturnedDadInts.Add(UtilMethods.parseCommonDadInt(commonDadInt));
-            }
+            return new TxSubmitReply();
 
-            return new TxSubmitReply { DadInts = { newReturnedDadInts } };
         }
     }
 }
