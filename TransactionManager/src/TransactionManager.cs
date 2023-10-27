@@ -79,11 +79,11 @@ namespace TransactionManager
             
 
             try{
-                Server server = startServer(thisUrl, clientService, transactionManagerInternalServiceServer);
+                Server server = startServer(thisUrl, clientService, transactionManagerInternalServiceServer, state);
 
                 state.StartTransactionManager();
 
-                DisposeServer(server);
+                DisposeServer(clientService, transactionManagerInternalServiceServer);
 
             }catch(Exception e){
                 Console.WriteLine("Error: " + e.Message);
@@ -109,7 +109,7 @@ namespace TransactionManager
             return true;
         }
 
-        private static Server startServer(string thisUrl, ClientServiceImpl clientService, TransactionManagerInternalServiceServer transactionManagerInternalServiceServer)
+        private static Server startServer(string thisUrl, ClientServiceImpl clientService, TransactionManagerInternalServiceServer transactionManagerInternalServiceServer, TransactionManagerState transactionManagerState)
         {
             string[] splitString = thisUrl.Split(":");
 
@@ -123,7 +123,7 @@ namespace TransactionManager
             try{
                 server = new Server
                 {
-                    Services = { ClientService.BindService(clientService), TransactionManagerInternalService.BindService(transactionManagerInternalServiceServer) },
+                    Services = { ClientService.BindService(clientService), TransactionManagerInternalService.BindService(transactionManagerInternalServiceServer), StatusService.BindService(new StatusServiceImpl(transactionManagerState)) },
                     Ports = { new ServerPort(hostname, port, ServerCredentials.Insecure) }
                 };
                 server.Start();
@@ -135,8 +135,9 @@ namespace TransactionManager
             return server;
         }
 
-        private static void DisposeServer(Server server){
-            server.ShutdownAsync().Wait();
+        private static void DisposeServer(ClientServiceImpl clientService, TransactionManagerInternalServiceServer transactionManagerInternalServiceClient){
+            clientService.DisableService();
+            transactionManagerInternalServiceClient.DisableService();
         }
 
         private static void WriteArguments(string name, string thisUrl, TimeOnly startingTime, List<string> tMsUrls, List<string> leaseManagersUrls){

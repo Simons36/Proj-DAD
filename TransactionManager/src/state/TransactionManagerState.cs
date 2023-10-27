@@ -43,6 +43,8 @@ namespace TransactionManager.src.state
 
         private System.Timers.Timer _serverDoesntReleaseLeaseTimer;
 
+        private bool _isOnline;
+
 
         public TransactionManagerState(LeaseManagerServiceImpl leaseManagerService, string name, TimeOnly startingTime, 
                                         int timeSlotDuration, int timeSlotNumber, TransactionManagerInternalServiceClient transactionManagerClient){
@@ -70,6 +72,8 @@ namespace TransactionManager.src.state
             _dadIntsKeysNeverSeenBefore = new List<string>();
 
             _transactions = new Dictionary<int, Transaction>();
+
+            _isOnline = true;
         }
 
         public void StartTransactionManager(){
@@ -89,7 +93,8 @@ namespace TransactionManager.src.state
                 _transactions.Add(transactionId, transaction);
             }
 
-            Console.WriteLine("Transaction with id " + transactionId + " has " + _transactions[transactionId].DadIntsToBeWritten.Count + " writes");
+            Console.WriteLine("Received transaction with transaction id " + transactionId);
+            Console.WriteLine();
 
             //create list of strings with keys of keystoberead and dadintstobewritten and no repetitions
             List<string> allKeys = new List<string>();
@@ -102,6 +107,15 @@ namespace TransactionManager.src.state
                     allKeys.Add(dadInt.Key);
 
             List<string> keysWithNoLease = GetKeysWithNoLease(allKeys);
+
+            if(keysWithNoLease.Count != 0){
+                Console.WriteLine("Will need to ask for lease for transaction " + transactionId + " for the following keys:");
+                foreach (string key in keysWithNoLease){
+                    Console.WriteLine("  - " + key);
+                }
+                Console.WriteLine();
+
+            }
 
             await SendToLeaseManagers(keysWithNoLease, false);
 
@@ -135,7 +149,6 @@ namespace TransactionManager.src.state
 
             WaitForThisServerTurn(transactionId);
 
-            Console.WriteLine("Entering critical section at time: " + DateTime.Now.ToString("HH:mm:ss.fff"));
             lock(_transactions){
                 lock(_dadIntsSet){
                     returnedDadInts = _transactions[transactionId].Execute(_dadIntsSet);
@@ -144,13 +157,14 @@ namespace TransactionManager.src.state
 
                 List<LeaseTransactionManagerStruct> leasesReleased = _leaseManagement.ReleaseUsedKeys();
 
-                Console.WriteLine("Sending the following leases at time:" + DateTime.Now.ToString("HH:mm:ss.fff") + ":");
+                Console.WriteLine("Sending the following leases at time:");
                 foreach(LeaseTransactionManagerStruct lease in leasesReleased){
                     Console.WriteLine("Lease for key " + lease.Key + " with index " + lease.Index);
                 }
                 Console.WriteLine();
                 Console.WriteLine("Right now this server has the following leases:");
                 _leaseManagement.PrintLeasesOwnedByThisServer();
+                Console.WriteLine();
                 _transactionManagerClient.CommunicateTransactionHasBeenDone(_transactions[transactionId].DadIntsToBeWritten, leasesReleased);
 
                 Monitor.PulseAll(_transactions);
@@ -211,58 +225,31 @@ namespace TransactionManager.src.state
                 Thread.Sleep(timeToWait);
                 _currentEpoch = 1;
                 Console.WriteLine("Epoch " + _currentEpoch + " started");
-                object lockObject = new object();
-                SetTimer(timeSlotDuration, lockObject);
+
+
                 Task.Run(() => SendToLeaseManagers(new List<string>(), true));
-                WaitForFinalEpoch(lockObject);
+                AdvanceEpoch();
             }catch(InvalidStartingTimeException e){
                 throw e;
             }
             
         }
 
-        private void SetTimer(int timeToWait, object lockObject){
-            _epochTimer = new System.Timers.Timer(timeToWait);
-            _epochTimer.Elapsed += (sender, e) => AdvanceEpoch(sender, e, lockObject);
-            _epochTimer.AutoReset = true;
-            _epochTimer.Enabled = true;
+        private void AdvanceEpoch(){
+            while(_currentEpoch <= _timeSlotNumber){
 
-        }
+                Thread.Sleep(_timeSlotDuration);
+                Console.WriteLine("Epoch " + _currentEpoch + " ended");
 
-        private void AdvanceEpoch(object source, ElapsedEventArgs e, object objectCheckForEpochEnd){
-            Console.WriteLine("Epoch " + _currentEpoch + " ended");
+                _currentEpoch++;
+                Task.Run(() => SendToLeaseManagers(new List<string>(), true)); //just to make sure that even if we dont send any keys, we still receive leases from other servers
 
-            lock(objectCheckForEpochEnd){
-                Monitor.PulseAll(objectCheckForEpochEnd);
+                Console.WriteLine("Epoch " + _currentEpoch + " started");
             }
 
-            _currentEpoch++;
-            Task.Run(() => SendToLeaseManagers(new List<string>(), true)); //just to make sure that even if we dont send any keys, we still receive leases from other servers
-
-            Console.WriteLine("Epoch " + _currentEpoch + " started");
+            _isOnline = false;
         }
 
-        private void WaitForFinalEpoch(object lockObject){
-            lock(lockObject){
-                while(_currentEpoch != (_timeSlotNumber + 1)){
-                    Monitor.Wait(lockObject);
-                }
-            }
-        }
-
-
-        private void WaitForPreviousEpochToFinish(int previousEpoch){
-
-            if(_currentEpoch != 1 && _sentLeaseRequestReferringToEpoch[previousEpoch]){
-                lock(_receivedLeasesReferringToEpoch){
-                    while(!_receivedLeasesReferringToEpoch[previousEpoch]){
-                        Monitor.Wait(_receivedLeasesReferringToEpoch);
-                    }
-                }
-
-            }
-
-        }
 
         private async Task SendToLeaseManagers(List<string> keysWithNoLease, bool justToGetResults){
             if(keysWithNoLease.Count != 0 || justToGetResults){
@@ -273,15 +260,6 @@ namespace TransactionManager.src.state
 
                 _sentLeaseRequestReferringToEpoch[_currentEpoch] = true;
                 LeaseSolicitationReturnStruct newLeases = await _leaseManagerService.LeaseSolicitation(leaseToBeRequested);
-
-
-                //write newLeases
-                // Console.WriteLine("Received leases requested in epoch " + newLeases.Epoch + ":");
-
-                // for(int i = 0; i < newLeases.Leases.Count; i++){
-                //     Console.WriteLine("Received lease " + i + ":\n" + newLeases.Leases[i].ToString());
-                //     Console.WriteLine();
-                // }
 
                 lock(_receivedLeasesReferringToEpoch){
                     //because lease solicitation can be called multiple times in the same epoch, only add leases if they were not already received
@@ -296,6 +274,15 @@ namespace TransactionManager.src.state
                     }
 
                 }
+            }
+        }
+
+        public void StatusCommandHandler(){
+            Console.Write("Received Status Command: ");
+            if(_isOnline){
+                Console.WriteLine("Online");
+            }else{
+                Console.WriteLine("Offline");
             }
         }
 

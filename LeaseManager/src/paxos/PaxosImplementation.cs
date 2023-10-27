@@ -37,6 +37,8 @@ namespace LeaseManager.src.paxos
         //needed for leader election
         private int _timesRestartedEpoch;
 
+        private bool _isOnline;
+
         public PaxosImplementation(int timeslotNumber, int duration, TimeOnly startingTime, Dictionary<string, int> leaseManagerNameToId, 
                                     int crashingTimeSlot, Dictionary<string, List<int>> suspectedServers, int id, PaxosInternalServiceClient paxosClient){
             
@@ -62,6 +64,8 @@ namespace LeaseManager.src.paxos
 
             _epochResult = new Dictionary<int, TaskCompletionSource<List<Lease>>>();
             _timesRestartedEpoch = 0;
+
+            _isOnline = true;
         }
 
         public string GetThisServerName(){
@@ -94,12 +98,15 @@ namespace LeaseManager.src.paxos
                     
                     if(_currentEpoch == _crashingTimeSlot - 1){
                         Console.WriteLine("Crashing at epoch " + _currentEpoch + 1);
+                        _isOnline = false;
                         return;
                     }
                     Task advanceEpoch = new Task(() => AdvanceEpoch());
                     advanceEpoch.Start();
 
                 }
+
+                _isOnline = false;
 
 
             }catch(InvalidStartingTimeException e){
@@ -358,6 +365,15 @@ namespace LeaseManager.src.paxos
 
         public bool CheckConfirmationReceivedHandler(int epoch){
             return _activePaxosInstances[epoch].HasReceivedFinalConfirmation;
+        }
+
+        public void StatusCommandHandler(){
+            Console.Write("Received Status Command: ");
+            if(_isOnline){
+                Console.WriteLine("Online");
+            }else{
+                Console.WriteLine("Offline");
+            }
         }
 
     }

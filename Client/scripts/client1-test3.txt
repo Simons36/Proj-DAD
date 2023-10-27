@@ -3,3 +3,4 @@ W 8000
 T () (<"simao",20>,<"ola",11>)
 T ("simao","ola","jose") ()
 W 2500
+S

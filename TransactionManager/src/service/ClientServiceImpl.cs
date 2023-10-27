@@ -11,11 +11,22 @@ namespace TransactionManager.src.service
 
         private TransactionManagerState _state;
 
+        private bool _isServiceEnabled = true;
+
         public ClientServiceImpl(TransactionManagerState state){
             _state = state;
+
+        }
+
+        public void DisableService(){
+            _isServiceEnabled = false;
         }
 
         public override async Task<TxSubmitReply> TxSubmit(TxSubmitRequest request, ServerCallContext context){
+            if(!_isServiceEnabled){
+                throw new RpcException(new Status(StatusCode.Unavailable, "Service is disabled"));
+            }
+
             try{
                 Console.WriteLine("Received TxSubmit request from client " + request.Client + " with " + request.ReadDads.Count + " dads to be read and " + request.WriteDads.Count + " dads to be written");
 

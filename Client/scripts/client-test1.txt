@@ -1,4 +1,2 @@
-W 100
-T () (<"simao",10>,<"miguel",20>)
-T ("simao","miguel") ()
+S
 W 15000

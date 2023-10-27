@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+service StatusService{
+    rpc StatusCommand (RequestStatus) returns (StatusResponse);
+}
+
+message RequestStatus{
+}
+
+message StatusResponse{
+}

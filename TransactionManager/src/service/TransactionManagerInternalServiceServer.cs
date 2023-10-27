@@ -13,13 +13,23 @@ namespace TransactionManager.src.service
 
         private TransactionManagerState _state;
 
+        private bool _isServiceEnabled = true;
+
         public TransactionManagerInternalServiceServer(TransactionManagerState state)
         {
             _state = state;
         }
 
+        public void DisableService(){
+            _isServiceEnabled = false;
+        }
+
         public override Task<ExecutedTransactionResponse> ExecutedTransaction(ExecutedTransactionRequest request, Grpc.Core.ServerCallContext context)
         {
+            if(!_isServiceEnabled){
+                throw new Grpc.Core.RpcException(new Grpc.Core.Status(Grpc.Core.StatusCode.Unavailable, "Service is disabled"));
+            }
+
             Console.WriteLine("Received information about executed transaction");
 
             List<DadInt> dadInts = new List<DadInt>();

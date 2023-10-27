@@ -9,16 +9,15 @@ P LeaseManager3 L http://localhost:3338
 P client1 C client1-test3.txt
 P client2 C client2-test3.txt
 #
-S 9
+S 5
 #
-T 05:28:00
+T 19:32:30
 #
 # Each time slots lasts 10000 miliseconds
 D 10000
 #
-F 1 N N N N N N
-F 2 N N N N N N
-F 3 N N N N N N
-F 4 N N N N N N
-F 5 N N N N N N
-#
+F 1 N N N N N C
+F 2 N N N N N C
+F 3 N N N N N C
+F 4 N N N N N C
+F 5 N N N N N C

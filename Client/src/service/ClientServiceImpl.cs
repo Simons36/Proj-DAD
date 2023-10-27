@@ -16,12 +16,19 @@ namespace Client.src.service
 
         private int _serverToConnect;
 
-        public ClientServiceImpl(List<string> tMsUrls, int id){
+        private List<string> _leaseManagersUrls;
+
+        public ClientServiceImpl(List<string> tMsUrls, int id, List<string> leaseManagersUrls){
             _tMsUrls = tMsUrls;
             _id = id;
+            _leaseManagersUrls = leaseManagersUrls;
             _crashedServers = new List<int>();
-            _serverToConnect = (_id - 1) % _tMsUrls.Count;
+            _serverToConnect = GetServerToConnect(_id);
             createStub();
+        }
+
+        private int GetServerToConnect(int _id){
+            return (_id - 1) % _tMsUrls.Count;
         }
 
         private void createStub(){
@@ -30,6 +37,10 @@ namespace Client.src.service
             //if it fails to connect to the server, it will try to connect to the next one
             //and so on, until it connects to one, and it will keep registering crashed servers
             //if crashed server list is the size of the total number of servers, it will throw an exception
+
+            if(_crashedServers.Count == _tMsUrls.Count){
+                throw new Exception("All servers are down");
+            }
 
             GrpcChannel grpcChannel = GrpcChannel.ForAddress(_tMsUrls[_serverToConnect]);
 
@@ -47,11 +58,16 @@ namespace Client.src.service
             List<ProtoDadInt> receivedList = new List<ProtoDadInt>();
 
             try{
-            receivedList = (await _stub.TxSubmitAsync(new TxSubmitRequest { Client = client, ReadDads = { keysToRead }, WriteDads = { parsedDadInts } }))
+                receivedList = (await _stub.TxSubmitAsync(new TxSubmitRequest { Client = client, ReadDads = { keysToRead }, WriteDads = { parsedDadInts } }))
                                              .DadInts.ToList();
 
             }catch(RpcException e){
-                Console.WriteLine("Error: " + e.Message);
+                Console.WriteLine("Error: Transaction Manager is not available");
+                _id++;
+                _crashedServers.Add(_serverToConnect);
+                _serverToConnect = GetServerToConnect(_id);
+                createStub();
+                throw e;
             }
 
             List<DadInt> commonDadInts = new List<DadInt>();
@@ -62,11 +78,28 @@ namespace Client.src.service
             return commonDadInts;
         }
 
-        public bool Status()
+        public void Status()
         {
-            /* estabelecer comunicação com transaction managers e pedir status (TO DO) */
+            foreach(string url in _tMsUrls){
+                try{
+                    GrpcChannel grpcChannel = GrpcChannel.ForAddress(url);
+                    StatusService.StatusServiceClient stub = new StatusService.StatusServiceClient(grpcChannel);
+                    stub.StatusCommand(new RequestStatus());
+                }catch(RpcException e){
 
-            return true;
+                }
+            }
+
+            //same thing for lease managers
+            foreach(string url in _leaseManagersUrls){
+                try{
+                    GrpcChannel grpcChannel = GrpcChannel.ForAddress(url);
+                    StatusService.StatusServiceClient stub = new StatusService.StatusServiceClient(grpcChannel);
+                    stub.StatusCommand(new RequestStatus());
+                }catch(RpcException e){
+
+                }
+            }
         }
         
     }

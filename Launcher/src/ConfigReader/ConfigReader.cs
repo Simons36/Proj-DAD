@@ -147,6 +147,14 @@ namespace src.ConfigReader
                             count++;
                         }
                     }
+
+                    foreach(int key in _clientsArgumentsMap.Keys){
+                        _clientsArgumentsMap[key] += " --lease-urls";
+                        
+                        foreach(string url in _leaseManagerUrls){
+                            _clientsArgumentsMap[key] += $" {url}";
+                        }
+                    }
                     
 
 

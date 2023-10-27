@@ -18,6 +18,7 @@
 
     <Protobuf Include="../Common/proto/PaxosInternalService.proto" GrpcServices="Both" />
     <Protobuf Include="../Common/proto/TransactionManager-LeaseManager.proto" GrpcServices="Server" />
+    <Protobuf Include="../Common/proto/StatusCommand.proto" GrpcServices="Server"/>
 
   </ItemGroup>
 

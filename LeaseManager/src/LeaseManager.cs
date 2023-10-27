@@ -131,7 +131,8 @@ namespace LeaseManager.src
                 server = new Server
                 {
                     Services = { LeaseSolicitationService.BindService(leaseSolicitationService),
-                                PaxosInternalService.BindService(paxosInternalServiceServer)},
+                                PaxosInternalService.BindService(paxosInternalServiceServer),
+                                StatusService.BindService(new StatusServiceImpl(paxos))},
 
                     Ports = { new ServerPort(hostname, port,ServerCredentials.Insecure) }
                 };
@@ -157,9 +158,16 @@ namespace LeaseManager.src
                 Console.ReadKey();
             }
 
-            Console.WriteLine("Shutting down server...");
-            server.KillAsync().Wait();
-            Console.WriteLine("Server shut down.");
+            try{
+                Console.WriteLine("Shutting down server...");
+                //server.ShutdownAsync().Wait();
+                paxosInternalServiceServer.DisableService();
+                leaseSolicitationService.DisableService();
+                Console.WriteLine("Server shut down.");
+
+            }catch(Exception e){
+            }
+
 
 
             Console.WriteLine("Press any key to exit...");

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Client.src.service;
 using Common.structs;
+using Grpc.Core;
 using Microsoft.VisualBasic;
 
 namespace Client.src.commands
@@ -41,9 +42,9 @@ namespace Client.src.commands
             try{
                  results = await _clientService.TxSubmit(_clientName, _dadIntsToRead, _dadIntsToWrite);
             }
-            catch (Exception e){
-                Console.WriteLine(e);
-                throw;
+            catch (RpcException){
+                Console.WriteLine("Transaction " + _id + " has been canceled");
+                return;
             }
 
             Console.WriteLine("Received from transaction:" + _id + "." + _runNumber);

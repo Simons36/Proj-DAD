@@ -110,7 +110,6 @@ namespace LeaseManager.src.paxos
 
                     if(newPosition != i){
                         receivedLeases[newPosition].DadIntsKeys.Add(keyLease);
-                        Console.WriteLine("MOVED KEY " + keyLease + " FROM " + i + " TO " + newPosition + " FOR TM " + tmName + "");
                         movedThisString[keyLease] = true;
                     }
                 }
@@ -118,7 +117,6 @@ namespace LeaseManager.src.paxos
                 foreach(string keyLease in movedThisString.Keys){
                     if(movedThisString[keyLease]){
                         receivedLeases[i].DadIntsKeys.Remove(keyLease);
-                        Console.WriteLine("REMOVED KEY " + keyLease + " FROM " + i + " FOR TM " + tmName + "");
                     }
                 }
             }
@@ -137,8 +135,13 @@ namespace LeaseManager.src.paxos
 
                 PaxosMessageStruct prepareMessage = new PaxosMessageStruct(sentPrepareTimestamp, _epoch);
                 
-
-                List<PaxosMessageStruct> receivedPromises = Task.Run(() =>{return _paxosClient.broadcastPrepareMessage(prepareMessage);}).Result;
+                List<PaxosMessageStruct> receivedPromises = new List<PaxosMessageStruct>();
+                try{
+                    receivedPromises = Task.Run(() =>{return _paxosClient.broadcastPrepareMessage(prepareMessage);}).Result;
+                }catch(Exception e){
+                    Console.WriteLine("Error: " + e.Message);
+                }
+                
 
 
                 
@@ -196,7 +199,11 @@ namespace LeaseManager.src.paxos
 
                 PaxosMessageStruct acceptMessage = new PaxosMessageStruct(_writeTimestamp, _proposedValue, _epoch);
 
-                List<PaxosMessageStruct> receivedAccepted = Task.Run(() =>{return _paxosClient.broadcastAcceptMessage(acceptMessage);}).Result;
+                try{
+                    List<PaxosMessageStruct> receivedAccepted = Task.Run(() =>{return _paxosClient.broadcastAcceptMessage(acceptMessage);}).Result;
+                }catch(Exception){
+
+                }
 
                 //because it is the leader, it doesnt make sense to wait for confirmation from itself
                 _hasReceivedFinalConfirmation = true;

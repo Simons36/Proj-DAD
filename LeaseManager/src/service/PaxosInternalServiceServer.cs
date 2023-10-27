@@ -17,12 +17,21 @@ namespace LeaseManager.src.service
     {
         private PaxosImplementation _paxosClient;
 
+        private bool _isServiceEnabled = true;
+
         public PaxosInternalServiceServer(PaxosImplementation paxosClient){
             _paxosClient = paxosClient;
         }
 
+        public void DisableService(){
+            _isServiceEnabled = false;
+        }
+
         public override Task<PromiseMessage> Prepare(PrepareMessage request, ServerCallContext context)
         {
+            if(!_isServiceEnabled){
+                throw new RpcException(new Status(StatusCode.Unavailable, "Service is disabled"));
+            }
             try{
                 PaxosMessageStruct promiseMessage = _paxosClient.PrepareRequestHandler(
                 PaxosMessagesParser.ParsePrepareMessageToPaxosMessageStruct(request));
@@ -36,6 +45,9 @@ namespace LeaseManager.src.service
 
         public override Task<AcceptedMessage> Accept(AcceptMessage request, ServerCallContext context)
         {
+            if(!_isServiceEnabled){
+                throw new RpcException(new Status(StatusCode.Unavailable, "Service is disabled"));
+            }
             try{
                 PaxosMessageStruct acceptedMessage = _paxosClient.AcceptRequestHandler(
                     PaxosMessagesParser.ParseAcceptMessageToPaxosMessageStruct(request));
@@ -49,6 +61,10 @@ namespace LeaseManager.src.service
         }
 
         public override Task<EmptyMessage> SentToTransactionManagersConfirmation(LeaseReplySent request, ServerCallContext context){
+            if(!_isServiceEnabled){
+                throw new RpcException(new Status(StatusCode.Unavailable, "Service is disabled"));
+            }
+
             //parse request proto leases to leases
             List<Lease> leases = new List<Lease>();
             foreach(ProtoLease leaseProto in request.Leases){
@@ -59,8 +75,12 @@ namespace LeaseManager.src.service
         }
 
         public override Task<CheckConfirmationReceivedReply> CheckConfirmationReceived(CheckConfirmationReceivedRequest request, ServerCallContext context){
+            if(!_isServiceEnabled){
+                throw new RpcException(new Status(StatusCode.Unavailable, "Service is disabled"));
+            }
             bool confirmationReceived = _paxosClient.CheckConfirmationReceivedHandler(request.Epoch);
             return Task.FromResult(new CheckConfirmationReceivedReply{ConfirmationReceived = confirmationReceived});
         }
+
     }
 }

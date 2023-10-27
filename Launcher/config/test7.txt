@@ -11,7 +11,7 @@ P client2 C client2-test7.txt
 #
 S 50
 #
-T 06:20:00
+T 16:31:10
 #
 # Each time slots lasts 10000 miliseconds
 D 10000
