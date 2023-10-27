@@ -8,9 +8,9 @@ P LeaseManager3 L http://localhost:3338
 #
 P client1 C client-test1.txt
 #
-S 2
+S 10
 #
-T 01:25:10
+T 02:53:50
 #
 # Each time slots lasts 10000 miliseconds
 D 10000

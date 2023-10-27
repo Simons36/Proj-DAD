@@ -4,6 +4,8 @@ using Common.util;
 using Common.exceptions;
 using System.Timers;
 using TransactionManager.src.structs;
+using TransactionManager.src.state.utilityClasses;
+using System.Security.Cryptography;
 
 namespace TransactionManager.src.state
 {
@@ -12,8 +14,6 @@ namespace TransactionManager.src.state
         private LeaseManagerServiceImpl _leaseManagerService;
 
         private TransactionManagerInternalServiceClient _transactionManagerClient;
-
-        private List<string> _currentAcquiredLeases;
 
         private Dictionary<string, DadInt> _dadIntsSet;
 
@@ -33,7 +33,9 @@ namespace TransactionManager.src.state
 
         private Dictionary<int, bool> _sentLeaseRequestReferringToEpoch; //key: epoch, value: true if sent lease request for that epoch, false otherwise
 
-        private Dictionary<string, List<string>> _listOfServersHoldingLeases; //key: dadint key, value: list of servers holding leases for that dadint
+        private LeaseManagement _leaseManagement; //list of leases received in order of epoch
+
+        private List<string> _dadIntsKeysNeverSeenBefore; //list of dadint keys that were never seen before
 
         private Dictionary<int, Transaction> _transactions; //key: transaction id, value: transaction
 
@@ -46,7 +48,6 @@ namespace TransactionManager.src.state
                                         int timeSlotDuration, int timeSlotNumber, TransactionManagerInternalServiceClient transactionManagerClient){
             _leaseManagerService = leaseManagerService;
             _transactionManagerClient = transactionManagerClient;
-            _currentAcquiredLeases = new List<string>();
             _dadIntsSet = new Dictionary<string, DadInt>();
             _name = name;
 
@@ -64,7 +65,10 @@ namespace TransactionManager.src.state
                 _receivedLeasesReferringToEpoch.Add(i, false);
             }
 
-            _listOfServersHoldingLeases = new Dictionary<string, List<string>>();
+            _leaseManagement = new LeaseManagement(_name);
+
+            _dadIntsKeysNeverSeenBefore = new List<string>();
+
             _transactions = new Dictionary<int, Transaction>();
         }
 
@@ -75,7 +79,7 @@ namespace TransactionManager.src.state
         public async Task<List<DadInt>> TransactionHandler(string clientId, List<string> keysToBeRead, List<DadInt> dadIntsToBeWritten){
             
             //if there were no sent lease requests in the previous epoch, no need to wait for received leases
-            WaitForPreviousEpochToFinish(_currentEpoch - 1);
+            //WaitForPreviousEpochToFinish(_currentEpoch - 1);
 
             Transaction transaction = new Transaction(keysToBeRead, dadIntsToBeWritten);
             int transactionId;
@@ -84,6 +88,8 @@ namespace TransactionManager.src.state
                 transactionId = _transactions.Count;
                 _transactions.Add(transactionId, transaction);
             }
+
+            Console.WriteLine("Transaction with id " + transactionId + " has " + _transactions[transactionId].DadIntsToBeWritten.Count + " writes");
 
             //create list of strings with keys of keystoberead and dadintstobewritten and no repetitions
             List<string> allKeys = new List<string>();
@@ -97,35 +103,19 @@ namespace TransactionManager.src.state
 
             List<string> keysWithNoLease = GetKeysWithNoLease(allKeys);
 
-            await SendToLeaseManagers(keysWithNoLease);
+            await SendToLeaseManagers(keysWithNoLease, false);
 
             return ExecuteTransaction(transactionId);
         }
 
         private List<string> GetKeysWithNoLease(List<string> keys){
-            List<string> keysWithNoLease = new List<string>();
+            List<string> keysToBeAskedForLease = new List<string>();
 
-            List<string> keysWithLeaseFor = new List<string>();
-
-            lock(_currentAcquiredLeases){
-
-                Console.WriteLine("Count:" + _currentAcquiredLeases.Count);
-
-                foreach(string key in _currentAcquiredLeases){
-                    keysWithLeaseFor.Add(key);
-                }
-
+            lock(_leaseManagement){
+                keysToBeAskedForLease = _leaseManagement.GetKeysThatNeedToBeRequested(keys);
             }
 
-            keysWithLeaseFor = keysWithLeaseFor.Distinct().ToList();
-
-            foreach(string key in keys){
-                if(!keysWithLeaseFor.Contains(key)){
-                    keysWithNoLease.Add(key);
-                }
-            }
-
-            return keysWithNoLease;
+            return keysToBeAskedForLease;
         }
 
         private List<DadInt> ExecuteTransaction(int transactionId){
@@ -136,116 +126,50 @@ namespace TransactionManager.src.state
 
                 if(transactionId != 0){
                     while(!_transactions.ContainsKey(previousTransaction) || !_transactions[previousTransaction].HasFinished){
+                        Console.WriteLine("Waiting for transaction " + previousTransaction + " to finish");
                         Monitor.Wait(_transactions);
                     }
                 }
 
             }
 
-            if(transactionId != 0){
-                Console.WriteLine(_transactions[previousTransaction].HasFinished);
+            WaitForThisServerTurn(transactionId);
+
+            Console.WriteLine("Entering critical section at time: " + DateTime.Now.ToString("HH:mm:ss.fff"));
+            lock(_transactions){
+                lock(_dadIntsSet){
+                    returnedDadInts = _transactions[transactionId].Execute(_dadIntsSet);
+                }
+                Console.WriteLine("Executed " + transactionId + " at time: " + DateTime.Now.ToString("HH:mm:ss.fff"));
+
+                List<LeaseTransactionManagerStruct> leasesReleased = _leaseManagement.ReleaseUsedKeys();
+
+                Console.WriteLine("Sending the following leases at time:" + DateTime.Now.ToString("HH:mm:ss.fff") + ":");
+                foreach(LeaseTransactionManagerStruct lease in leasesReleased){
+                    Console.WriteLine("Lease for key " + lease.Key + " with index " + lease.Index);
+                }
+                Console.WriteLine();
+                Console.WriteLine("Right now this server has the following leases:");
+                _leaseManagement.PrintLeasesOwnedByThisServer();
+                _transactionManagerClient.CommunicateTransactionHasBeenDone(_transactions[transactionId].DadIntsToBeWritten, leasesReleased);
+
+                Monitor.PulseAll(_transactions);
             }
 
-
-            List<string> necessaryKeys = new List<string>();
-            
-            Console.WriteLine("GOing to execute transaction " + transactionId + "key ola: ");
-
-            // for(int i = 0; i < _listOfServersHoldingLeases["ola"].Count; i++){
-            //     Console.WriteLine("Position " + i + ":" + _listOfServersHoldingLeases["ola"][i]);
-            // }
-
-            necessaryKeys = CheckIfIsThisServerTurn(transactionId);
-
-
-                lock(_transactions){
-                    lock(_dadIntsSet){
-                        returnedDadInts = _transactions[transactionId].Execute(_dadIntsSet);
-                    }
-                    Console.WriteLine("Executed " + transactionId + " at time: " + DateTime.Now.ToString("HH:mm:ss.fff"));
-    
-
-
-
-                    List<string> keysWithLeasesWeWillGiveUpOn = GetUnusedLeases(transactionId);
-
-                    List<string> necessaryKeysRemovedFromLeasesWeWillGiveUpOn = necessaryKeys.Except(keysWithLeasesWeWillGiveUpOn).ToList();
-
-                    Task.Run(() => _transactionManagerClient.
-                    CommunicateTransactionHasBeenDone(necessaryKeys, necessaryKeysRemovedFromLeasesWeWillGiveUpOn, _transactions[transactionId].DadIntsToBeWritten));
-                    Monitor.PulseAll(_transactions);
-                }
+            Console.WriteLine("Returned dadints for transaction " + transactionId + ":");
+            foreach(DadInt dadInt in returnedDadInts){
+                Console.WriteLine("  - " + dadInt.Key + " -> " + dadInt.Value);
+            }
             
             return returnedDadInts;
         }
 
-        private List<string> CheckIfIsThisServerTurn(int transactionId){
+        private void WaitForThisServerTurn(int transactionId){
+            Console.WriteLine("Checking if this server has the appropriate leases for transaction " + transactionId);
             List<string> necessaryLeasesKeys = _transactions[transactionId].GetNecessaryKeys();
 
-            foreach(string key in necessaryLeasesKeys){
-                //Console.WriteLine(_transactions[transactionId - 1].HasFinished);
-                Console.WriteLine("Checkin if has lease for key " + key);
-
-                lock(this){
-                    int x = 0;
-                    while(!_listOfServersHoldingLeases[key][0].Equals(_name)){ //while it is not this server turn, wait
-                        x++;
-                        Console.WriteLine("Passed " + x + " times here for transaction " + transactionId + "for key " + key);
-                        Task.Run(() => ServerDoesntReleaseLeaseTimeout());
-                        Monitor.Wait(this);
-                    }
-
-                    string thisServer = _listOfServersHoldingLeases[key][0];
-                    _listOfServersHoldingLeases[key].RemoveAt(0);
-                    _listOfServersHoldingLeases[key].Add(thisServer);
-                }
-
-                Console.WriteLine("Checking complete for key " + key);
-            }
-
-            return necessaryLeasesKeys;
-            //if reaches here, then is this server turn
-        }
-
-        private List<string> GetUnusedLeases(int transactionId){
-            List<string> keysWithLeasesWeWillGiveUpOn = new List<string>();
-
-            lock(this){
-
-
-                List<string> leasesThatWilStillBeUsed = new List<string>();
-
-                foreach(int id in _transactions.Keys){
-                    if(!_transactions[id].HasFinished){
-                        leasesThatWilStillBeUsed = leasesThatWilStillBeUsed.Concat(_transactions[id].GetNecessaryKeys()).Distinct().ToList();
-                    }
-                }
-
-                
-                    Console.WriteLine("Current acquired leases:");
-                foreach(string key in _currentAcquiredLeases){
-                    Console.WriteLine("Key: " + key);
-
-                    if(!leasesThatWilStillBeUsed.Contains(key)){
-                        keysWithLeasesWeWillGiveUpOn.Add(key);
-                    }
-                }
-
-                keysWithLeasesWeWillGiveUpOn = keysWithLeasesWeWillGiveUpOn.Distinct().ToList();
-
-                foreach(string key in keysWithLeasesWeWillGiveUpOn){ //remove from total leases
-                    _currentAcquiredLeases.RemoveAll(entry => entry.Equals(key));
-                }
-                
-
-                foreach(string key in keysWithLeasesWeWillGiveUpOn){ //but also remove itself from list of servers holding leases
-                    _listOfServersHoldingLeases[key].RemoveAll(entry => entry.Equals(_name));
-                }
-            
-            }
-
-            return keysWithLeasesWeWillGiveUpOn;
-
+            _leaseManagement.GotNecessaryLeases(necessaryLeasesKeys);
+            Console.WriteLine("This server has the appropriate leases for transaction " + transactionId);
         }
 
         private void ServerDoesntReleaseLeaseTimeout(){
@@ -261,39 +185,10 @@ namespace TransactionManager.src.state
         }
 
 
-        public void ReceivedTransactionExecutionHandler(List<string> keysExecutedInTransaction, List<string> gaveUpLeasesOnThisKeys, List<DadInt> dadIntsWritten){
-            lock(this){
-                foreach(string key in keysExecutedInTransaction){
-                    if(!gaveUpLeasesOnThisKeys.Contains(key)){
-
-                        //move server that just executed transaction to the end of the list
-                        string server = _listOfServersHoldingLeases[key][0];
-                        _listOfServersHoldingLeases[key].RemoveAt(0);
-                        _listOfServersHoldingLeases[key].Add(server);
-
-
-                    }
-                }
-
-                foreach(string key in gaveUpLeasesOnThisKeys){
-
-                    Console.WriteLine();
-                    Console.WriteLine("Removing server" + _listOfServersHoldingLeases[key][0] + " from key " + key);
-                    Console.WriteLine();
-                    _listOfServersHoldingLeases[key].RemoveAt(0);
-                    Console.WriteLine("Pulse all on key " + key);
-                    
-                }
-
-                Monitor.PulseAll(this);
-            }
-            for(int i = 0; i < _listOfServersHoldingLeases["simao"].Count; i++){
-                Console.WriteLine("Position " + i + ":" + _listOfServersHoldingLeases["simao"][i]);
-            }
-
+        public void ReceivedTransactionExecutionHandler(List<DadInt> dadIntsWritten, List<LeaseTransactionManagerStruct> freedLeases){
             UpdateDadIntsSet(dadIntsWritten);
 
-            DisposeServerDoesntReleaseLeaseTimer();
+            _leaseManagement.AddReceivedLeases(freedLeases);
         }
 
         private void UpdateDadIntsSet(List<DadInt> dadIntsWritten){
@@ -318,9 +213,8 @@ namespace TransactionManager.src.state
                 Console.WriteLine("Epoch " + _currentEpoch + " started");
                 object lockObject = new object();
                 SetTimer(timeSlotDuration, lockObject);
-
+                Task.Run(() => SendToLeaseManagers(new List<string>(), true));
                 WaitForFinalEpoch(lockObject);
-
             }catch(InvalidStartingTimeException e){
                 throw e;
             }
@@ -343,13 +237,14 @@ namespace TransactionManager.src.state
             }
 
             _currentEpoch++;
+            Task.Run(() => SendToLeaseManagers(new List<string>(), true)); //just to make sure that even if we dont send any keys, we still receive leases from other servers
 
             Console.WriteLine("Epoch " + _currentEpoch + " started");
         }
 
         private void WaitForFinalEpoch(object lockObject){
             lock(lockObject){
-                while(_currentEpoch != _timeSlotNumber){
+                while(_currentEpoch != (_timeSlotNumber + 1)){
                     Monitor.Wait(lockObject);
                 }
             }
@@ -369,8 +264,8 @@ namespace TransactionManager.src.state
 
         }
 
-        private async Task SendToLeaseManagers(List<string> keysWithNoLease){
-            if(keysWithNoLease.Count != 0){
+        private async Task SendToLeaseManagers(List<string> keysWithNoLease, bool justToGetResults){
+            if(keysWithNoLease.Count != 0 || justToGetResults){
 
                 Lease leaseToBeRequested = new Lease();
                 leaseToBeRequested.AssignedTransactionManager = _name;
@@ -381,19 +276,19 @@ namespace TransactionManager.src.state
 
 
                 //write newLeases
-                Console.WriteLine("Received leases requested in epoch " + newLeases.Epoch + ":");
+                // Console.WriteLine("Received leases requested in epoch " + newLeases.Epoch + ":");
 
-                for(int i = 0; i < newLeases.Leases.Count; i++){
-                    Console.WriteLine("Received lease " + i + ":\n" + newLeases.Leases[i].ToString());
-                    Console.WriteLine();
-                }
+                // for(int i = 0; i < newLeases.Leases.Count; i++){
+                //     Console.WriteLine("Received lease " + i + ":\n" + newLeases.Leases[i].ToString());
+                //     Console.WriteLine();
+                // }
 
                 lock(_receivedLeasesReferringToEpoch){
                     //because lease solicitation can be called multiple times in the same epoch, only add leases if they were not already received
                     if(!_receivedLeasesReferringToEpoch[newLeases.Epoch]){ 
                         //add to current leases
 
-                        OrganizeReceivedLeases(newLeases);
+                        _leaseManagement.AppendReceivedLeases(newLeases.Leases);
 
 
                         _receivedLeasesReferringToEpoch[newLeases.Epoch] = true;
@@ -402,29 +297,6 @@ namespace TransactionManager.src.state
 
                 }
             }
-        }
-
-        private void OrganizeReceivedLeases(LeaseSolicitationReturnStruct receivedLeases){
-
-            foreach(Lease lease in receivedLeases.Leases){
-                foreach(string dadIntKey in lease.DadIntsKeys){
-                    lock(_listOfServersHoldingLeases){
-                        if(_listOfServersHoldingLeases.ContainsKey(dadIntKey)){
-                            _listOfServersHoldingLeases[dadIntKey].Add(lease.AssignedTransactionManager);
-                        }else{
-                            _listOfServersHoldingLeases.Add(dadIntKey, new List<string>{lease.AssignedTransactionManager});
-                        }
-                    }
-                }
-
-                if(lease.AssignedTransactionManager.Equals(_name)){
-                    lock(_currentAcquiredLeases){
-                        foreach(string dadIntKey in lease.DadIntsKeys)
-                            _currentAcquiredLeases.Add(dadIntKey);
-                    }
-                }
-            }
-
         }
 
     }

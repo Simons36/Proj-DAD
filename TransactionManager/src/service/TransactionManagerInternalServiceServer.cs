@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Common.structs;
 using TransactionManager.src.state;
 using Common.util;
+using TransactionManager.src.structs;
 
 namespace TransactionManager.src.service
 {
@@ -26,13 +27,12 @@ namespace TransactionManager.src.service
                 dadInts.Add(UtilMethods.parseProtoDadInt(dadIntProto));
             }
 
-            foreach(string str in request.GaveUpLeasesOnThisKey){
-                Console.WriteLine("Other server Gave up lease on key: " + str);
+            List<LeaseTransactionManagerStruct> receivedFreedLeases = new List<LeaseTransactionManagerStruct>();
+            foreach(TransactionManagerLease leaseProto in request.FreedLeases){
+                receivedFreedLeases.Add(new LeaseTransactionManagerStruct(leaseProto.Key, leaseProto.Index));
             }
 
-            Task.Run(() => _state.ReceivedTransactionExecutionHandler(request.TransactionKeys.ToList(), 
-                                                                         request.GaveUpLeasesOnThisKey.ToList(), 
-                                                                                                 dadInts));
+            Task.Run(() => _state.ReceivedTransactionExecutionHandler(dadInts, receivedFreedLeases));
             return Task.FromResult(new ExecutedTransactionResponse());
         }
     }

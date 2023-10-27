@@ -1,6 +1,6 @@
 using Common.structs;
 
-namespace TransactionManager.src.state
+namespace TransactionManager.src.state.utilityClasses
 {
     public class Transaction
     {

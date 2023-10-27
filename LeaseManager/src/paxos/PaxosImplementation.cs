@@ -8,6 +8,8 @@ namespace LeaseManager.src.paxos
 {
     public class PaxosImplementation
     {
+        private string _name;
+
         private List<TimeOnly> _epochStartingTimes;
 
         private Dictionary<string, int> _leaseManagerNameToId;
@@ -62,6 +64,15 @@ namespace LeaseManager.src.paxos
             _timesRestartedEpoch = 0;
         }
 
+        public string GetThisServerName(){
+            foreach(string key in _leaseManagerNameToId.Keys){
+                if(_leaseManagerNameToId[key] == _id){
+                    return key;
+                }
+            }
+            throw new Exception();
+        }
+
         public void Start(){
 
             Console.WriteLine("----------------------");
@@ -107,9 +118,12 @@ namespace LeaseManager.src.paxos
                                            + thisRequestEpoch 
                                            + "- Adding to current epoch received leases");
 
-            lock(this){
-                _currentEpochReceivedLeases.Add(requestedLease);
+            if(requestedLease.DadIntsKeys.Count != 0){
+                lock(this){
+                    _currentEpochReceivedLeases.Add(requestedLease);
+                }
             }
+
 
             lock(this){
                 if(!_epochResult.ContainsKey(thisRequestEpoch )){

@@ -17,7 +17,7 @@ namespace TransactionManager.src.service
 
         public override async Task<TxSubmitReply> TxSubmit(TxSubmitRequest request, ServerCallContext context){
             try{
-                Console.WriteLine("Received TxSubmit request from client " + request.Client);
+                Console.WriteLine("Received TxSubmit request from client " + request.Client + " with " + request.ReadDads.Count + " dads to be read and " + request.WriteDads.Count + " dads to be written");
 
                 string clientId = request.Client;
                 List<string> keysToBeRead = request.ReadDads.ToList();

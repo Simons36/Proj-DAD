@@ -3,6 +3,8 @@ using Common.util;
 using System.Net.Cache;
 using Grpc.Core;
 using Common.structs;
+using TransactionManager.src.state.utilityClasses;
+using TransactionManager.src.structs;
 
 namespace TransactionManager.src.service
 {
@@ -39,45 +41,54 @@ namespace TransactionManager.src.service
             }
         }
 
-        public async void CommunicateTransactionHasBeenDone(List<string> keysUsedInExecution, List<string> keysWithLeasesToGiveUpOn, List<DadInt> dadIntsToBeWritten){
+        public void CommunicateTransactionHasBeenDone(List<DadInt> dadIntsWritten, List<LeaseTransactionManagerStruct> freedLeases){
             List<ProtoDadInt> listProtoDadInts = new List<ProtoDadInt>();
 
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine();
-            foreach(string str in keysUsedInExecution){
-                Console.WriteLine("Passing on key " + str);
-            }
-            Console.WriteLine();
-            foreach(string str in keysWithLeasesToGiveUpOn){
-                Console.WriteLine("Giving up on key " + str);
-            }
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine();
-
-            foreach(DadInt dadInt in dadIntsToBeWritten){
+            foreach(DadInt dadInt in dadIntsWritten){
                 listProtoDadInts.Add(UtilMethods.parseCommonDadInt(dadInt));
             }
 
+            List<TransactionManagerLease> protoFreedLeases = new List<TransactionManagerLease>();
+
+            foreach(LeaseTransactionManagerStruct lease in freedLeases){
+                protoFreedLeases.Add(new TransactionManagerLease{
+                    Key = lease.Key,
+                    Index = lease.Index
+                });
+            }
+
             ExecutedTransactionRequest request = new ExecutedTransactionRequest{
-                TransactionKeys = { keysUsedInExecution },
-                GaveUpLeasesOnThisKey = { keysWithLeasesToGiveUpOn },
-                DadIntsWritten = { listProtoDadInts }
+                DadIntsWritten = { listProtoDadInts },
+                FreedLeases = { protoFreedLeases }
+                
             };
 
-            try{
-                List<Task<ExecutedTransactionResponse>> responseTask = new List<Task<ExecutedTransactionResponse>>();
-                
-                foreach(TransactionManagerInternalService.TransactionManagerInternalServiceClient client in _tMsClients){
-                    responseTask.Add(client.ExecutedTransactionAsync(request).ResponseAsync);
-                }
+            
+            
 
-                await Task.WhenAll(responseTask);
-                
-            }catch(RpcException){
-            }
-                Console.WriteLine("HAHAHAHHAHAHHAHHAHAHHAHAHHA");
+            // try{
+
+            //     Parallel.ForEach(_tMsClients, client =>
+            //     {
+                foreach(TransactionManagerInternalService.TransactionManagerInternalServiceClient client in _tMsClients){
+                    try
+                    {
+                        client.ExecutedTransaction(request);
+                    }
+                    catch (RpcException e)
+                    {
+                        Console.WriteLine("Error" + e.Message);
+                    }
+                }
+                // });
+
+            // }
+            // catch (AggregateException)
+            // {
+            //     Console.WriteLine("One or more tasks encountered exceptions");
+            // }
+
+
 
         }
     }

@@ -8,9 +8,8 @@ service TransactionManagerInternalService{
 }
 
 message ExecutedTransactionRequest{
-    repeated string transactionKeys = 1;
-    repeated string gaveUpLeasesOnThisKey = 2;
-    repeated ProtoDadInt dadIntsWritten = 3;
+    repeated ProtoDadInt dadIntsWritten = 1;
+    repeated TransactionManagerLease freedLeases = 2;
 }
 
 message ExecutedTransactionResponse{

@@ -10,6 +10,7 @@ namespace LeaseManager.src.paxos
 {
     public class PaxosInstance
     {
+
         private int _writeTimestamp;
 
         private int _readTimestamp;
@@ -32,6 +33,7 @@ namespace LeaseManager.src.paxos
 
         public PaxosInstance(int id, int epoch, bool isLeaderCurrentEpoch, bool wasLeaderPreviousEpoch, 
                                 List<Lease> proposedValue, PaxosInternalServiceClient paxosClient){
+
             _id = id;
             _epoch = epoch;
             _isLeaderCurrentEpoch = isLeaderCurrentEpoch;
@@ -40,7 +42,7 @@ namespace LeaseManager.src.paxos
             _readTimestamp = 0;
 
             _unmodifiedProposedValue = proposedValue;
-            _proposedValue = proposedValue;
+            ProposedValueSetter(proposedValue);
 
             _paxosClient = paxosClient;
             _hasReceivedFinalConfirmation = false;
@@ -75,33 +77,55 @@ namespace LeaseManager.src.paxos
         private void ProposedValueSetter(List<Lease> receivedLeases){
             _proposedValue = new List<Lease>();
 
-            foreach(Lease receivedLease in receivedLeases){
-                string attributedTransactionManager = receivedLease.AssignedTransactionManager;
+            for(int i = receivedLeases.Count - 1; i >= 1; i--){
 
-                bool containsTM = false;
-                foreach(Lease proposedLease in _proposedValue){
-                    if(proposedLease.AssignedTransactionManager.Equals(attributedTransactionManager)){
-                        containsTM = true;
-                        foreach(string receivedDadIntKey in receivedLease.DadIntsKeys){
-                            if(!proposedLease.DadIntsKeys.Contains(receivedDadIntKey)){
-                                proposedLease.addDadInt(receivedDadIntKey);
+                string tmName = receivedLeases[i].AssignedTransactionManager;
+
+                Dictionary<string, bool> movedThisString = new Dictionary<string, bool>();
+
+                foreach(string keyLease in receivedLeases[i].DadIntsKeys){
+                    movedThisString.Add(keyLease, false);
+                    int newPosition = i;
+
+                    // for(int k = i - 1; k >= 0; k--){
+                    //     if(!receivedLeases[k].AssignedTransactionManager.Equals(tmName) && receivedLeases[k].DadIntsKeys.Contains(keyLease)){
+                    //         break;
+                    //     }else{
+                    //         newPosition = k;
+                    //     }
+                    // }
+
+                    for(int k = i - 1; k >= 0; k--){
+                        if(!receivedLeases[k].AssignedTransactionManager.Equals(tmName)){
+                            if(receivedLeases[k].DadIntsKeys.Contains(keyLease)){
+                                break;
                             }
+                        }else{
+                            newPosition = k;
                         }
+                        
+                    }
+
+
+
+                    if(newPosition != i){
+                        receivedLeases[newPosition].DadIntsKeys.Add(keyLease);
+                        Console.WriteLine("MOVED KEY " + keyLease + " FROM " + i + " TO " + newPosition + " FOR TM " + tmName + "");
+                        movedThisString[keyLease] = true;
                     }
                 }
 
-                if(!containsTM){
-                    Lease newLease = new Lease();
-
-                    newLease.AssignedTransactionManager = attributedTransactionManager;
-                    foreach(string dadIntKey in receivedLease.DadIntsKeys){
-                        if(!newLease.DadIntsKeys.Contains(dadIntKey)){
-                            newLease.addDadInt(dadIntKey);
-                        }
+                foreach(string keyLease in movedThisString.Keys){
+                    if(movedThisString[keyLease]){
+                        receivedLeases[i].DadIntsKeys.Remove(keyLease);
+                        Console.WriteLine("REMOVED KEY " + keyLease + " FROM " + i + " FOR TM " + tmName + "");
                     }
+                }
+            }
 
-                    _proposedValue.Add(newLease);
-
+            foreach(Lease lease in receivedLeases){
+                if(lease.DadIntsKeys.Count != 0){
+                    _proposedValue.Add(lease);
                 }
             }
         }
