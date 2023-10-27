@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+import "ProtoStructs.proto";
+
+service PaxosInternalService{
+    rpc Prepare(PrepareMessage) returns (PromiseMessage);
+    rpc Accept(AcceptMessage) returns (AcceptedMessage);
+    rpc SentToTransactionManagersConfirmation(LeaseReplySent) returns (EmptyMessage);
+    rpc CheckConfirmationReceived(CheckConfirmationReceivedRequest) returns (CheckConfirmationReceivedReply);
+}
+
+message PrepareMessage{
+    int32 writeTimestamp = 1;
+    int32 epoch = 3;
+}
+
+message PromiseMessage{
+    int32 writeTimestamp = 1;
+    repeated ProtoLease leases = 2;
+    int32 epoch = 3;
+}
+
+message AcceptMessage{
+    int32 writeTimestamp = 1;
+    repeated ProtoLease leases = 2;
+    int32 epoch = 3;
+}
+
+message AcceptedMessage{
+    int32 writeTimestamp = 1;
+    repeated ProtoLease leases = 2;
+    int32 epoch = 3;
+}
+
+message LeaseReplySent{
+    int32 epoch = 1;
+    repeated ProtoLease leases = 2;
+}
+
+message EmptyMessage{
+}
+
+message CheckConfirmationReceivedRequest{
+    int32 epoch = 1;
+}
+
+message CheckConfirmationReceivedReply{
+    bool confirmationReceived = 1;
+}
+
+

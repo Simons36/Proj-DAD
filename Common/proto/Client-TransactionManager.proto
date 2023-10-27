@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+import "ProtoStructs.proto";
+
+service ClientService {
+  rpc TxSubmit (TxSubmitRequest) returns (TxSubmitReply);
+  rpc Status (StatusRequest) returns (StatusReply);
+}
+
+message TxSubmitRequest {
+  string client = 1;
+  repeated string readDads = 2;
+  repeated ProtoDadInt writeDads = 3;
+}
+
+message TxSubmitReply {
+	repeated ProtoDadInt dadInts = 1;
+}
+
+message StatusRequest {}
+
+message StatusReply {
+  bool ok = 1;
+}

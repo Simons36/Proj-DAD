@@ -2,7 +2,8 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Client.src.commands;
 using Client.src.service;
-using Client.src.exceptions;
+using Common.exceptions;
+using Common.util;
 
 namespace Client.src
 {
@@ -23,6 +24,8 @@ namespace Client.src
         //list of commands to execute on loop
         private List<Command> _commands;
 
+        private int _transactionCommandsCount;
+
         public ScriptRunner(string name, string script, int numberTimeSlots, int timeSlotDuration, TimeOnly startingTime, ClientServiceImpl clientService){
             _name = name;
 
@@ -38,6 +41,7 @@ namespace Client.src
             _startingTime = startingTime;
             _clientService = clientService;
             _commands = new List<Command>();
+            _transactionCommandsCount = 0;
         }
 
         public void RunScript(){
@@ -50,16 +54,17 @@ namespace Client.src
 
             int timeToRun = _numberTimeSlots * _timeSlotDuration;
 
-            DateTime currTime = DateTime.Now;
-            TimeSpan timeDiff = _startingTime.ToTimeSpan() - currTime.TimeOfDay; // time diff between current time and starting time
+            int timeToWait = 0;
 
-            if(timeDiff.TotalMilliseconds < 0){//if starting time has already passed
-                throw new InvalidStartingTimeException("Starting time is invalid (already passed)");
+            try{
+                timeToWait = UtilMethods.getTimeUntilStart(_startingTime);
+            }catch(InvalidStartingTimeException e){
+                throw e;
             }
             
             //wait until starting time
-            Thread.Sleep(((int)timeDiff.TotalMilliseconds) );
-            Console.WriteLine("time diff " + timeDiff.ToString());
+            Thread.Sleep((timeToWait) );
+            Console.WriteLine("Starting script");
 
 
             Stopwatch stopwatch = new Stopwatch();
@@ -69,7 +74,6 @@ namespace Client.src
             
             while (stopwatch.Elapsed.TotalMilliseconds < timeToRun)
             {
-                Console.WriteLine(i);
                 i = i % _commands.Count;
 
                 _commands[i].Execute();
@@ -117,35 +121,55 @@ namespace Client.src
 
                         //writes part
 
-                        List<Common.DadInt> listDadIntsToWrite = new List<Common.DadInt>();
+                        List<Common.structs.DadInt> listDadIntsToWrite = new List<Common.structs.DadInt>();
 
+                        //remove parenthesis
                         string dadIntsToWrite = lineSplit[2].Remove(0, 1);
                         dadIntsToWrite = dadIntsToWrite.Remove(dadIntsToWrite.Length - 1, 1);
 
+                        //split pairs
                         string[] listUnparsedDadInts = dadIntsToWrite.Trim('<', '>').Split(',');
                         List<string> listParsedDadInts = new List<string>();
 
                         //write each pair
                         foreach(string str in listUnparsedDadInts){
-                            string toAdd = str;
-                            toAdd = str.Replace("<", "");
-                            toAdd = toAdd.Replace(">", "");
+                            if(str != ""){
+                                string toAdd = str;
+                                toAdd = str.Replace("<", "");
+                                toAdd = toAdd.Replace(">", "");
+                                toAdd = toAdd.Replace("\"", ""); //remove quotes
 
-                            listParsedDadInts.Add(toAdd);
+                                listParsedDadInts.Add(toAdd);
+                            }
                         }
 
                         for(int i = 0; i < listParsedDadInts.Count; i += 2){
-                            Common.DadInt dadIntToAdd = new Common.DadInt(listParsedDadInts[i], int.Parse(listParsedDadInts[i + 1]));
+                            Common.structs.DadInt dadIntToAdd = new Common.structs.DadInt(listParsedDadInts[i], int.Parse(listParsedDadInts[i + 1]));
 
                             listDadIntsToWrite.Add(dadIntToAdd);
                         }
+
+                        _transactionCommandsCount++;
 
                         //create command and store it
                         TransactionCommand transactionCommand = new TransactionCommand(
                                                                          _clientService, 
                                                                             _name, 
                                                                          listKeysToRead, 
-                                                                        listDadIntsToWrite);
+                                                                        listDadIntsToWrite, 
+                                                                                    _transactionCommandsCount);
+
+                        Console.WriteLine("Transaction command " + _transactionCommandsCount + ":");
+                        Console.WriteLine(" Keys read:");
+                        foreach(string key in listKeysToRead){
+                            Console.WriteLine("  - " + key);
+                        }
+                        Console.WriteLine(" Keys written:");
+                        foreach(Common.structs.DadInt dadInt in listDadIntsToWrite){
+                            Console.WriteLine("  - " + dadInt.Key + " -> " + dadInt.Value);
+                        }
+                        Console.WriteLine();
+
 
                         _commands.Add(transactionCommand);
 

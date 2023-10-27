@@ -20,6 +20,8 @@ namespace src.ConfigReader
 
         private Dictionary<int,string> _leaseManagersArgumentsMap; //key: lease manager id, value: arguments for console line
 
+        private Dictionary<int, string> _leaseManagerIdToName;
+
         private string _configPath;
 
         private int _numberOfTimeSlots;
@@ -55,6 +57,8 @@ namespace src.ConfigReader
             _transactionManagersArgumentsMap = new Dictionary<int, string>();
             _leaseManagersArgumentsMap = new Dictionary<int, string>();
             _leaseManagerUrls = new List<string>();
+            _leaseManagerIdToName = new Dictionary<int, string>();
+
             _isWindows = false;
         }
 
@@ -75,6 +79,7 @@ namespace src.ConfigReader
             _transactionManagerPath = processesPaths[1];
             _leaseManagerPath = processesPaths[2];
             _leaseManagerUrls = new List<string>();
+            _leaseManagerIdToName = new Dictionary<int, string>();
 
             _isWindows = true;
         }
@@ -98,21 +103,56 @@ namespace src.ConfigReader
                         ReadConfigLine(line);
                     }
 
-                    string toAppend = $" -nr {_numberOfTimeSlots.ToString()} -d {_timeSlotDuration.ToString()} -t {_startingTime.TimeOfDay.ToString()} -u";
-
-                    foreach(string url in _transactionManagersUrls){
-
-                        toAppend += $" {url}";
-                    }
+                    string toAppend = $" -nr {_numberOfTimeSlots.ToString()} -d {_timeSlotDuration.ToString()} -t {_startingTime.TimeOfDay.ToString()}";
 
                     appendToArguments(toAppend);
+                    
+                    //add tm urls to client arguments
+                    foreach(int key in _clientsArgumentsMap.Keys){
+                        _clientsArgumentsMap[key] += " -u";
+                        foreach(string url in _transactionManagersUrls){
+                            _clientsArgumentsMap[key] += $" {url}";
+                        }
+                    }
 
+                    //add tm urls to transaction manager arguments
+                    foreach(int key in _transactionManagersArgumentsMap.Keys){
+                        _transactionManagersArgumentsMap[key] += " -u";
+                        foreach(string url in _transactionManagersUrls){
+                            _transactionManagersArgumentsMap[key] += $" {url}";
+                        }
+                    }
+
+                    //add lm urls to lease manager arguments
                     foreach(int key in _leaseManagersArgumentsMap.Keys)
                     {
-                        _leaseManagersArgumentsMap[key] += " -nl";
-                        foreach(string url in _leaseManagerUrls)
-                        {
-                            _leaseManagersArgumentsMap[key] += $" {url}";
+                        _leaseManagersArgumentsMap[key] += " --lease-urls";
+
+                        int count = 0;
+                        foreach(int id in _leaseManagerIdToName.Keys){
+                            _leaseManagersArgumentsMap[key] += $" {_leaseManagerIdToName[id]} {_leaseManagerUrls[count]}";
+                            count++;
+                        }
+
+                    }
+
+                    //add lm urls to transaction manager as well
+                    foreach(int key in _transactionManagersArgumentsMap.Keys){
+
+                        _transactionManagersArgumentsMap[key] += " --lease-urls";
+
+                        int count = 0;
+                        foreach(int id in _leaseManagerIdToName.Keys){
+                            _transactionManagersArgumentsMap[key] += $" {_leaseManagerUrls[count]}";
+                            count++;
+                        }
+                    }
+
+                    foreach(int key in _clientsArgumentsMap.Keys){
+                        _clientsArgumentsMap[key] += " --lease-urls";
+                        
+                        foreach(string url in _leaseManagerUrls){
+                            _clientsArgumentsMap[key] += $" {url}";
                         }
                     }
                     
@@ -164,6 +204,7 @@ namespace src.ConfigReader
                         }
 
                         foreach(string argument in _leaseManagersArgumentsMap.Values){
+                            
 
                             ProcessStartInfo processStartInfo = new ProcessStartInfo
                             {
@@ -231,7 +272,10 @@ namespace src.ConfigReader
                             _leaseManagerUrls.Add(extraArgument);
 
                             //id of lease managers starts counting after transaction managers' last id
-                            _leaseManagersArgumentsMap.Add(_transactionManagersArgumentsMap.Count + _leaseManagersArgumentsMap.Count + 1, argumentsLine);
+                            int leaseManagerId = _transactionManagersArgumentsMap.Count + _leaseManagersArgumentsMap.Count + 1;
+
+                            _leaseManagersArgumentsMap.Add(leaseManagerId, argumentsLine);
+                            _leaseManagerIdToName.Add(leaseManagerId, processName);
                             break;
 
                         case "C":
@@ -304,9 +348,11 @@ namespace src.ConfigReader
                             if(!_serversThatCrashed.Contains(id)){
                                 
                                 if(_transactionManagersArgumentsMap.ContainsKey(id))
-                                    _transactionManagersArgumentsMap[id] += $" -c {timeSlot}"; //introduce time slot to crash
-                                else
-                                    _leaseManagersArgumentsMap[id] += $" -c {timeSlot}"; //introduce time slot to crash
+                                    _transactionManagersArgumentsMap[id] += $" -crashed {timeSlot}"; //introduce time slot to crash
+                                else{
+                                    _leaseManagersArgumentsMap[id] += $" -crashed {timeSlot}"; //introduce time slot to crash
+
+                                }
                                 _serversThatCrashed.Add(id);
 
                             }

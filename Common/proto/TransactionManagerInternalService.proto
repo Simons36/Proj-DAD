@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+import "ProtoStructs.proto";
+
+service TransactionManagerInternalService{
+    rpc ExecutedTransaction(ExecutedTransactionRequest) returns (ExecutedTransactionResponse);
+    rpc CheckTransactionManagerAvailability(CheckTransactionManagerAvailabilityRequest) returns (CheckTransactionManagerAvailabilityResponse);
+}
+
+message ExecutedTransactionRequest{
+    repeated ProtoDadInt dadIntsWritten = 1;
+    repeated TransactionManagerLease freedLeases = 2;
+}
+
+message ExecutedTransactionResponse{
+}
+
+message CheckTransactionManagerAvailabilityRequest{
+}
+
+message CheckTransactionManagerAvailabilityResponse{
+    string transactionManagerName = 1;
+}
+

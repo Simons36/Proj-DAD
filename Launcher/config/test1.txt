@@ -1,0 +1,16 @@
+P TransactionManager1 T http://localhost:3333
+P TransactionManager2 T http://localhost:3334
+P TransactionManager3 T http://localhost:3335
+P LeaseManager1 L http://localhost:3336
+P LeaseManager2 L http://localhost:3337
+P LeaseManager3 L http://localhost:3338
+#
+#
+P client1 C client-test1.txt
+#
+S 5
+#
+T 19:25:00
+#
+# Each time slots lasts 10000 miliseconds
+D 10000

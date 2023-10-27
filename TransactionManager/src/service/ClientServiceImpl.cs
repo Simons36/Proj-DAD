@@ -1,10 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Grpc.Core;
-using TransactionManager.src.service.util;
 using TransactionManager.src.state;
+using Common.util;
+using Common.structs;
 
 namespace TransactionManager.src.service
 {
@@ -14,31 +11,47 @@ namespace TransactionManager.src.service
 
         private TransactionManagerState _state;
 
+        private bool _isServiceEnabled = true;
+
         public ClientServiceImpl(TransactionManagerState state){
             _state = state;
+
         }
 
-        public override Task<TxSubmitReply> TxSubmit(TxSubmitRequest request, ServerCallContext context){
-            Console.WriteLine("Received TxSubmit request from client " + request.Client);
+        public void DisableService(){
+            _isServiceEnabled = false;
+        }
 
-            string clientId = request.Client;
-            List<string> keysToBeRead = request.ReadDads.ToList();
-            List<DadInt> dadIntsToBeWritten = request.WriteDads.ToList();
-
-            List<Common.DadInt> newDadIntsToBeWritten = new List<Common.DadInt>();
-
-            foreach(DadInt protoDadInt in dadIntsToBeWritten){
-                newDadIntsToBeWritten.Add(DadIntParser.parseProtoDadInt(protoDadInt));
+        public override async Task<TxSubmitReply> TxSubmit(TxSubmitRequest request, ServerCallContext context){
+            if(!_isServiceEnabled){
+                throw new RpcException(new Status(StatusCode.Unavailable, "Service is disabled"));
             }
 
-            List<Common.DadInt> returnedDadInts = _state.TransactionHandler(clientId, keysToBeRead, newDadIntsToBeWritten);
+            try{
+                Console.WriteLine("Received TxSubmit request from client " + request.Client + " with " + request.ReadDads.Count + " dads to be read and " + request.WriteDads.Count + " dads to be written");
 
-            List<DadInt> newReturnedDadInts = new List<DadInt>();
-            foreach(Common.DadInt commonDadInt in returnedDadInts){
-                newReturnedDadInts.Add(DadIntParser.parseCommonDadInt(commonDadInt));
+                string clientId = request.Client;
+                List<string> keysToBeRead = request.ReadDads.ToList();
+                List<ProtoDadInt> dadIntsToBeWritten = request.WriteDads.ToList();
+
+                List<DadInt> newDadIntsToBeWritten = new List<DadInt>();
+
+                foreach(ProtoDadInt protoDadInt in dadIntsToBeWritten){
+                    newDadIntsToBeWritten.Add(UtilMethods.parseProtoDadInt(protoDadInt));
+                }
+
+                List<DadInt> returnedDadInts = await _state.TransactionHandler(clientId, keysToBeRead, newDadIntsToBeWritten);
+                
+                List<ProtoDadInt> newReturnedDadInts = new List<ProtoDadInt>();
+                foreach(DadInt commonDadInt in returnedDadInts){
+                    newReturnedDadInts.Add(UtilMethods.parseCommonDadInt(commonDadInt));
+                }
+                return new TxSubmitReply { DadInts = { newReturnedDadInts } };
+            }catch(Exception e){
             }
 
-            return Task.FromResult(new TxSubmitReply { DadInts = { newReturnedDadInts } });
+            return new TxSubmitReply();
+
         }
     }
 }

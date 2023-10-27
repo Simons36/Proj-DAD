@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Client.src.service;
+using Common.structs;
+using Grpc.Core;
+using Microsoft.VisualBasic;
 
 namespace Client.src.commands
 {
@@ -14,35 +17,55 @@ namespace Client.src.commands
 
         private List<string> _dadIntsToRead;
 
-        private List<Common.DadInt> _dadIntsToWrite;
+        private List<DadInt> _dadIntsToWrite;
 
-        public TransactionCommand(ClientServiceImpl clientService, string clientName, List<string> dadIntsToRead, List<Common.DadInt> dadIntsToWrite) : base()
+        private int _id;
+
+        private int _runNumber;
+
+        public TransactionCommand(ClientServiceImpl clientService, string clientName, List<string> dadIntsToRead, List<DadInt> dadIntsToWrite, int id) : base()
         {
             _clientService = clientService;
             _clientName = clientName;
             _dadIntsToRead = dadIntsToRead;
             _dadIntsToWrite = dadIntsToWrite;
+            _id = id;
+            _runNumber = 1;
         }
 
-        public override void Execute()
+        public override async void Execute()
         {
-            Console.WriteLine("Executing transaction command");
-            List<Common.DadInt> results;
+            Console.WriteLine("Executing transaction command " + _id + "." + _runNumber);
+
+            List<DadInt> results;
 
             try{
-                 results = _clientService.TxSubmit(_clientName, _dadIntsToRead, _dadIntsToWrite);
+                 results = await _clientService.TxSubmit(_clientName, _dadIntsToRead, _dadIntsToWrite);
             }
-            catch (Exception e){
-                Console.WriteLine(e);
-                throw;
+            catch (RpcException){
+                Console.WriteLine("Transaction " + _id + " has been canceled");
+                return;
             }
 
-            Console.WriteLine("Received from transaction:");
-            foreach (Common.DadInt dadInt in results){
-                Console.Write("DadInt received: <" + dadInt.Key + "> " + dadInt.Value);
+            Console.WriteLine("Received from transaction:" + _id + "." + _runNumber);
+            foreach (DadInt dadInt in results){
+                Console.WriteLine("DadInt received: " + dadInt.ToString());
+            }
+
+            List<string> keysReceived = new List<string>();
+            foreach(DadInt dadInt in results){
+                keysReceived.Add(dadInt.Key);
+            }
+
+            foreach(string key in _dadIntsToRead){
+                if(!keysReceived.Contains(key)){
+                    Console.WriteLine("DadInt with key " + key + " is null");
+                }
             }
             
             Console.WriteLine();
+
+            _runNumber++;
         }
     }
 }

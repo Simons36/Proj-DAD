@@ -3,7 +3,7 @@ using Grpc.Net.Client;
 using Client.src.service;
 using Common;
 using Client.src;
-using Client.src.exceptions;
+using Common.exceptions;
 
 namespace Client
 {
@@ -16,6 +16,7 @@ namespace Client
             int timeslotNumber = 0, duration = 0, id = 0;
             TimeOnly startingTime = new TimeOnly();
             List<string> tMsUrls = new List<string>();
+            List<string> leaseManagersUrls = new List<string>();
 
             Console.WriteLine("Starting DADKTV client process. Received arguments:");
 
@@ -67,6 +68,15 @@ namespace Client
                         }
                         break;
 
+                    case "--lease-urls":
+                        Console.WriteLine();
+                        Console.WriteLine("Lease Managers' URLs:");
+                        for(int k = i + 1; (k < args.Length) && (isNotPrefix(args[k])); k++){
+                            Console.WriteLine("  - " + args[k]);
+                            leaseManagersUrls.Add(args[k]);
+                        }
+                        break;
+
                     case "-id":
                         Console.WriteLine();
                         id = int.Parse(args[i + 1]);
@@ -81,16 +91,16 @@ namespace Client
 
             Console.WriteLine();
 
-            ClientServiceImpl clientService = new ClientServiceImpl(tMsUrls, id);
-            ScriptRunner scriptRunner = new ScriptRunner(name, /*script*/ "DADTKV_client_script_sample.txt", timeslotNumber, duration, startingTime, clientService);
+            ClientServiceImpl clientService = new ClientServiceImpl(tMsUrls, id, leaseManagersUrls);
+            ScriptRunner scriptRunner = new ScriptRunner(name, script, timeslotNumber, duration, startingTime, clientService);
 
             try{
                 scriptRunner.RunScript();
             }catch(InvalidStartingTimeException e){
                 Console.WriteLine(e.Message);
-            }catch(Exception e){
-                Console.WriteLine(e.Message);
-            }
+            }//catch(Exception e){
+              //  Console.WriteLine(e.Message);
+            //}
 
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
@@ -105,7 +115,9 @@ namespace Client
                 arg.Equals("-t")  || 
                 arg.Equals("-u")  || 
                 arg.Equals("-ul") || 
-                arg.Equals("-id") ) return false;
+                arg.Equals("-id") ||
+                arg.Equals("--lease-urls")) 
+                return false;
             
             return true;
         }

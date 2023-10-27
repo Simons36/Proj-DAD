@@ -1,0 +1,16 @@
+﻿syntax = "proto3";
+
+import "ProtoStructs.proto";
+
+service LeaseSolicitationService{
+    rpc LeaseSolicitation(LeaseRequest) returns (LeaseReply);
+}
+
+message LeaseRequest{
+    ProtoLease requestedLease = 1;
+}
+
+message LeaseReply{
+    int32 epoch = 1;
+    repeated ProtoLease leases = 2;
+}

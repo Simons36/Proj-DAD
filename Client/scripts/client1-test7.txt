@@ -1,0 +1,4 @@
+T () (<"simao",99>,<"afonso",1>)
+W 4000
+T ("emanuel") ()
+W 17530
